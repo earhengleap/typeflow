@@ -21,46 +21,122 @@
   :root {
     --theme-font: var(--font-jetbrains);
     color-scheme: dark;
-    height: 100%;
-    background-color: var(--mt-bg);
-    color: var(--mt-text);
+
+    /* Responsive content sizing */
+    --content-max-w: 1650px;
+    --content-px: 1.5rem;
+    --typing-font-size: clamp(1.125rem, 2.2vw, 1.5rem);
+    --typing-line-height: clamp(2rem, 3.5vw, 2.75rem);
+    --khmer-font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+    --khmer-line-height: clamp(2.5rem, 4.5vw, 3.625rem);
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    :root {
+      --content-px: 1rem;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    :root {
+      --content-px: 0.75rem;
+      --typing-font-size: clamp(0.95rem, 4vw, 1.25rem);
+      --typing-line-height: clamp(1.75rem, 6vw, 2.25rem);
+      --khmer-font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+      --khmer-line-height: clamp(2rem, 7vw, 2.75rem);
+    }
   }
 
   * {
-    @apply border-[#2a2a2a];
+    border-color: rgba(255, 255, 255, 0.06);
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+    background-color: var(--mt-bg);
+    color: var(--mt-text);
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     font-family: var(--theme-font), monospace;
-    height: 100%;
-    overflow: hidden;
+    min-height: 100%;
+    min-height: 100dvh;
     overscroll-behavior: none;
     background-color: var(--mt-bg);
     color: var(--mt-text);
-    selection-background-color: rgb(255 255 255 / 0.2);
     margin: 0;
     padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
   }
 
-  /* Scrollbar styling */
+  /* Desktop: lock viewport for immersive typing */
+  @media (min-width: 769px) {
+    body {
+      overflow: hidden;
+      height: 100%;
+    }
+  }
+
+  /* Mobile/Tablet: allow scrolling */
+  @media (max-width: 768px) {
+    body {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+
+  /* ---- Scrollbar ---- */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
-
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
   }
-
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/20;
+    background: rgba(255, 255, 255, 0.15);
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  /* ---- Selection ---- */
+  ::selection {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: inherit;
+  }
+
+  /* ---- Focus visible ---- */
+  :focus-visible {
+    outline: 2px solid var(--mt-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ---- Typing area gradient fade ---- */
+  .typing-fade-bottom {
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  }
+
+  /* ---- Caret blink ---- */
+  @keyframes caret-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .caret-idle {
+    animation: caret-blink 1s ease-in-out infinite;
+  }
+
+  /* ---- Smooth transitions for theme changes ---- */
+  .theme-transition {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
   }
 }

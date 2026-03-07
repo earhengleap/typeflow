@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import { RotateCcw, Timer, Zap, Keyboard as KeyboardIcon, Type, Globe, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint } from "@/hooks/use-monkeytype-store";
 
@@ -918,7 +918,11 @@ export default function MonkeyTypePage() {
 
     return (
         <div
-            className={cn("min-h-screen w-full flex flex-col items-center justify-start pt-16 px-4 overflow-hidden select-none transition-colors duration-500", language === "khmer" ? "font-sans font-medium" : "font-mono")}
+            className={cn(
+                "min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-start select-none theme-transition",
+                "pt-6 sm:pt-10 md:pt-16 px-[var(--content-px)]",
+                language === "khmer" ? "font-sans font-medium" : "font-mono"
+            )}
             onClick={() => inputRef.current?.focus()}
             style={{
                 backgroundColor: activeTheme.bg,
@@ -929,6 +933,7 @@ export default function MonkeyTypePage() {
                 '--mt-text-dim': activeTheme.textDim,
                 '--mt-primary': activeTheme.primary,
                 '--mt-error': activeTheme.error,
+                '--mt-primary-rgb': activeTheme.primary === '#e2b714' ? '226,183,20' : activeTheme.primary === '#ff007f' ? '255,0,127' : activeTheme.primary === '#ff79c6' ? '255,121,198' : '214,93,14',
             } as React.CSSProperties}
         >
 
@@ -1054,50 +1059,50 @@ export default function MonkeyTypePage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="w-full max-w-[1650px] flex flex-col gap-12"
+                        className="w-full max-w-[var(--content-max-w)] flex flex-col gap-4 sm:gap-6 md:gap-10 lg:gap-12"
                     >
                         {/* Mode Selector Config Bar */}
-                        <div className="flex items-center justify-center gap-6 p-1.5 rounded-xl self-center text-xs font-bold shadow-2xl transition-colors duration-500" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>
-                            <div className="flex items-center gap-4 px-4 border-r border-white/5">
-                                <button onClick={() => { setMode("time"); setConfig(30); resetTest(30, "time"); }} className={cn("flex items-center gap-1.5 transition-all outline-none", mode === "time" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
-                                    <Timer className="w-3.5 h-3.5" /> time
+                        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 p-1 sm:p-1.5 rounded-xl self-center text-[10px] sm:text-xs font-bold shadow-2xl theme-transition" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>
+                            <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 border-r border-white/5">
+                                <button onClick={() => { setMode("time"); setConfig(30); resetTest(30, "time"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", mode === "time" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                                    <Timer className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> time
                                 </button>
-                                <button onClick={() => { setMode("words"); setConfig(25); resetTest(25, "words"); }} className={cn("flex items-center gap-1.5 transition-all outline-none", mode === "words" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
-                                    <Type className="w-3.5 h-3.5" /> words
+                                <button onClick={() => { setMode("words"); setConfig(25); resetTest(25, "words"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", mode === "words" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                                    <Type className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> words
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-4 px-4 border-r border-white/5">
+                            <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 border-r border-white/5">
                                 {mode === "time" ? (
                                     [15, 30, 60, 120].map(t => (
-                                        <button key={t} onClick={() => { setConfig(t as GameConfig); resetTest(t as GameConfig); }} className={cn("transition-all outline-none", config === t ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                                        <button key={t} onClick={() => { setConfig(t as GameConfig); resetTest(t as GameConfig); }} className={cn("py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", config === t ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
                                             {t}
                                         </button>
                                     ))
                                 ) : (
                                     [10, 25, 50, 100].map(w => (
-                                        <button key={w} onClick={() => { setConfig(w as GameConfig); resetTest(w as GameConfig); }} className={cn("transition-all outline-none", config === w ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                                        <button key={w} onClick={() => { setConfig(w as GameConfig); resetTest(w as GameConfig); }} className={cn("py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", config === w ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
                                             {w}
                                         </button>
                                     ))
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-4 px-4 border-r border-white/5">
-                                <button onClick={() => { setLanguage("english"); resetTest(undefined, undefined, "english"); }} className={cn("transition-all outline-none", language === "english" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                            <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 border-r border-white/5">
+                                <button onClick={() => { setLanguage("english"); resetTest(undefined, undefined, "english"); }} className={cn("py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", language === "english" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
                                     english
                                 </button>
-                                <button onClick={() => { setLanguage("khmer"); resetTest(undefined, undefined, "khmer"); }} className={cn("transition-all outline-none", language === "khmer" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
+                                <button onClick={() => { setLanguage("khmer"); resetTest(undefined, undefined, "khmer"); }} className={cn("py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", language === "khmer" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
                                     khmer
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-4 px-4">
+                            <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
                                 {(Object.keys(THEMES) as Theme[]).map(t => (
                                     <button
                                         key={t}
                                         onClick={() => setTheme(t)}
-                                        className={cn("transition-all outline-none capitalize", theme === t ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}
+                                        className={cn("py-1.5 sm:py-2 transition-all outline-none capitalize min-h-[36px] sm:min-h-0", theme === t ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}
                                     >
                                         {t}
                                     </button>
@@ -1140,34 +1145,39 @@ export default function MonkeyTypePage() {
                         </div >
 
                         {/* 3-Line Typing Window */}
-                        < div
-                            className="relative overflow-hidden w-full px-4 transition-all duration-500"
+                        <div
+                            className="relative overflow-hidden w-full px-1 sm:px-4 transition-all duration-500 typing-fade-bottom"
                             style={{
                                 height: language === "khmer" ? "174px" : "120px",
-                                WebkitMaskImage: "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)"
-                            }
-                            }
+                            }}
                         >
                             <motion.div
                                 animate={{ y: lineOffset }}
                                 transition={userInput.length === 0 ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }}
                                 ref={wordsRef}
-                                className="relative text-3xl leading-[40px] tracking-tight"
+                                className="relative tracking-tight"
+                                style={{
+                                    fontSize: language === "khmer" ? 'var(--khmer-font-size)' : 'var(--typing-font-size)',
+                                    lineHeight: language === "khmer" ? 'var(--khmer-line-height)' : 'var(--typing-line-height)',
+                                }}
                             >
-                                {/* Caret: made slightly taller for Khmer stacks */}
+                                {/* Smooth Caret */}
                                 <motion.div
-                                    animate={{ top: caretPos.top, left: caretPos.left, opacity: [1, 0, 1] }}
-                                    transition={{
-                                        top: userInput.length === 0 ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 35 },
-                                        left: userInput.length === 0 ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 35 },
-                                        opacity: { repeat: Infinity, duration: 0.8 }
+                                    animate={{ top: caretPos.top, left: caretPos.left }}
+                                    transition={userInput.length === 0 ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 35 }}
+                                    className={cn(
+                                        "absolute w-[2.5px] rounded-full z-10 pointer-events-none will-change-transform",
+                                        !isActive && "caret-idle"
+                                    )}
+                                    style={{
+                                        backgroundColor: 'var(--mt-primary)',
+                                        height: language === "khmer" ? '34px' : '28px',
+                                        marginTop: language === "khmer" ? '6px' : '6px',
                                     }}
-                                    className="absolute w-[2px] h-[34px] rounded-full z-10 pointer-events-none mt-[3px] transition-colors duration-500"
-                                    style={{ backgroundColor: 'var(--mt-primary)' }}
                                 />
 
                                 {/* Words Grid */}
-                                <div className={cn("flex flex-wrap w-full", language === "khmer" ? "leading-[1.8] text-[32px] font-hanuman" : "leading-[40px] text-3xl")}>
+                                <div className={cn("flex flex-wrap w-full", language === "khmer" ? "font-hanuman" : "")}>
                                     {wordGroups.map((group, groupIdx) => {
                                         const wordStart = clusterIndexes[group[0]];
                                         const wordEnd = clusterIndexes[group[group.length - 1]] + clusters[group[group.length - 1]].length;
@@ -1204,62 +1214,64 @@ export default function MonkeyTypePage() {
                             />
                         </div >
 
-                        {/* Premium Mechanical Keyboard Visualizer */}
-                        {(() => {
-                            // Always show next key to press, updating as the user types
-                            const remainingTarget = targetText.slice(userInput.length);
-                            let nextKey: string | null = null;
-                            let needsShift = false;
+                        {/* Keyboard — Desktop only */}
+                        <div className="hidden md:block">
+                            {(() => {
+                                // Always show next key to press, updating as the user types
+                                const remainingTarget = targetText.slice(userInput.length);
+                                let nextKey: string | null = null;
+                                let needsShift = false;
 
-                            if (remainingTarget) {
-                                if (language === "khmer") {
-                                    if (remainingTarget.startsWith(" ")) {
-                                        nextKey = "space";
-                                        needsShift = true;
+                                if (remainingTarget) {
+                                    if (language === "khmer") {
+                                        if (remainingTarget.startsWith(" ")) {
+                                            nextKey = "space";
+                                            needsShift = true;
+                                        } else {
+                                            for (const [qKey, m] of Object.entries(KHMER_KEY_MAP)) {
+                                                if (remainingTarget.startsWith(m.base)) {
+                                                    nextKey = qKey;
+                                                    needsShift = false;
+                                                    break;
+                                                }
+                                                if (remainingTarget.startsWith(m.shift)) {
+                                                    nextKey = qKey;
+                                                    needsShift = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     } else {
-                                        for (const [qKey, m] of Object.entries(KHMER_KEY_MAP)) {
-                                            if (remainingTarget.startsWith(m.base)) {
-                                                nextKey = qKey;
-                                                needsShift = false;
-                                                break;
+                                        const char = remainingTarget[0];
+                                        if (char === " ") {
+                                            nextKey = "space";
+                                        } else if (char) {
+                                            const baseKey = ENGLISH_BASE_MAP[char] || char.toLowerCase();
+                                            for (const row of KEYBOARD_ROWS) {
+                                                if (row.includes(baseKey)) {
+                                                    nextKey = baseKey;
+                                                    break;
+                                                }
                                             }
-                                            if (remainingTarget.startsWith(m.shift)) {
-                                                nextKey = qKey;
-                                                needsShift = true;
-                                                break;
-                                            }
+                                            needsShift = /[A-Z!@#$%^&*()_+{}|:"<>?]/.test(char);
                                         }
-                                    }
-                                } else {
-                                    const char = remainingTarget[0];
-                                    if (char === " ") {
-                                        nextKey = "space";
-                                    } else if (char) {
-                                        const baseKey = ENGLISH_BASE_MAP[char] || char.toLowerCase();
-                                        for (const row of KEYBOARD_ROWS) {
-                                            if (row.includes(baseKey)) {
-                                                nextKey = baseKey;
-                                                break;
-                                            }
-                                        }
-                                        needsShift = /[A-Z!@#$%^&*()_+{}|:"<>?]/.test(char);
                                     }
                                 }
-                            }
 
-                            return (
-                                <Keyboard
-                                    activeKeys={activeKeys}
-                                    errorKey={errorKey}
-                                    language={language}
-                                    isShiftPressed={isShiftPressed}
-                                    nextKeyData={{ key: nextKey, needsShift }}
-                                />
-                            );
-                        })()}
+                                return (
+                                    <Keyboard
+                                        activeKeys={activeKeys}
+                                        errorKey={errorKey}
+                                        language={language}
+                                        isShiftPressed={isShiftPressed}
+                                        nextKeyData={{ key: nextKey, needsShift }}
+                                    />
+                                );
+                            })()}
+                        </div>
 
-                        <div className="flex flex-col items-center gap-6 mt-4 opacity-50">
-                            <div className="text-[10px] text-[var(--mt-text-dim)] tracking-[0.2em] uppercase flex gap-8">
+                        <div className="flex flex-col items-center gap-3 sm:gap-6 mt-2 sm:mt-4 opacity-50">
+                            <div className="hidden sm:flex text-[10px] text-[var(--mt-text-dim)] tracking-[0.2em] uppercase gap-8">
                                 <span><span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded mr-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Tab</span> + <span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Enter</span> Restart</span>
                                 <span><span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded mr-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Esc</span> Quick Reset</span>
                             </div>
@@ -1287,30 +1299,31 @@ export default function MonkeyTypePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.35, ease: "easeOut" }}
-                        className="flex flex-col w-full max-w-[1650px] h-[calc(100vh-80px)] py-6 gap-0 justify-between"
+                        className="w-full max-w-[var(--content-max-w)] flex flex-col py-4 sm:py-6 gap-0 justify-between"
+                        style={{ minHeight: 'calc(100dvh - 80px)' } as React.CSSProperties}
                     >
                         {/* Main 2-Column Layout */}
-                        <div className="flex w-full gap-8 flex-1 min-h-0">
+                        <div className="flex flex-col md:flex-row w-full gap-4 md:gap-8 flex-1 min-h-0">
 
                             {/* LEFT — WPM, Acc + Stats */}
-                            <div className="flex flex-col justify-between w-[280px] shrink-0 border-r pr-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
+                            <div className="flex flex-col justify-between w-full md:w-[280px] md:shrink-0 md:border-r md:pr-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
                                 {/* WPM */}
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>wpm</span>
-                                    <span className="text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
+                                    <span className="text-[56px] sm:text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
                                 </div>
 
                                 {/* Acc */}
-                                <div className="flex flex-col mt-4">
+                                <div className="flex flex-col mt-2 sm:mt-4">
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>acc</span>
-                                    <span className="text-[56px] font-black leading-none tracking-tighter" style={{ color: activeTheme.text }}>{stats.accuracy}%</span>
+                                    <span className="text-[40px] sm:text-[56px] font-black leading-none tracking-tighter" style={{ color: activeTheme.text }}>{stats.accuracy}%</span>
                                 </div>
 
                                 {/* Divider */}
-                                <div className="my-5 border-t" style={{ borderColor: `${activeTheme.textDim}15` }} />
+                                <div className="my-3 sm:my-5 border-t" style={{ borderColor: `${activeTheme.textDim}15` }} />
 
                                 {/* Secondary Stats */}
-                                <div className="flex flex-col gap-4 flex-1">
+                                <div className="flex flex-row md:flex-col gap-3 sm:gap-4 flex-1 flex-wrap">
                                     {[
                                         { label: "test type", value: `${mode} ${config}`, sub: language, primary: true },
                                         { label: "raw", value: String(stats.rawWpm), primary: true },
@@ -1336,8 +1349,8 @@ export default function MonkeyTypePage() {
                         </div>
 
                         {/* Bottom — Restart hint + button */}
-                        <div className="flex items-center justify-center gap-6 pt-4 border-t" style={{ borderColor: `${activeTheme.textDim}15` }}>
-                            <div className="flex items-center gap-2 text-[11px] font-mono opacity-30" style={{ color: activeTheme.textDim }}>
+                        <div className="flex items-center justify-center gap-4 sm:gap-6 pt-4 border-t" style={{ borderColor: `${activeTheme.textDim}15` }}>
+                            <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono opacity-30" style={{ color: activeTheme.textDim }}>
                                 <span className="px-2 py-0.5 rounded" style={{ backgroundColor: activeTheme.bgAlt, color: activeTheme.primary }}>tab</span>
                                 <span>+</span>
                                 <span className="px-2 py-0.5 rounded" style={{ backgroundColor: activeTheme.bgAlt, color: activeTheme.primary }}>enter</span>
@@ -1365,8 +1378,8 @@ export default function MonkeyTypePage() {
                 )}
             </AnimatePresence >
 
-            <div className="fixed bottom-6 right-6 text-[10px] text-[#646669]/20 font-bold tracking-[0.3em] uppercase opacity-50">
-                MonkeyType // Codex Edition 1.0
+            <div className="fixed bottom-3 sm:bottom-6 right-3 sm:right-6 text-[8px] sm:text-[10px] font-bold tracking-[0.3em] uppercase opacity-20 pointer-events-none" style={{ color: activeTheme.textDim }}>
+                TypeFlow 1.0
             </div>
         </div >
     );
