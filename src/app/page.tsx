@@ -1143,26 +1143,31 @@ export default function MonkeyTypePage() {
                             </div>
                         </div>
 
-                        {/* Caps Lock Warning — English mode only */}
+                        {/* Caps Lock Warning — like monkeytype.com */}
                         <AnimatePresence>
-                            {isCapsLock && language === "english" && (
+                            {isCapsLock && (
                                 <motion.div
                                     key="capslock"
-                                    initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                                    className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-xs tracking-[0.2em] uppercase"
-                                    style={{
-                                        backgroundColor: `${activeTheme.error} 22`,
-                                        color: activeTheme.error,
-                                        border: `1.5px solid ${activeTheme.error} 55`,
-                                        boxShadow: `0 0 18px ${activeTheme.error} 22`
-                                    }}
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="flex items-center justify-center gap-2 overflow-hidden"
                                 >
-                                    <span style={{ fontSize: 16, lineHeight: 1 }}>⇪</span>
-                                    <span>caps lock</span>
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-black" style={{ backgroundColor: `${activeTheme.error} 30` }}>ON</span>
+                                    <div
+                                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase"
+                                        style={{
+                                            color: activeTheme.error,
+                                            backgroundColor: `${activeTheme.error}15`,
+                                        }}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 17v.01" />
+                                            <path d="M12 13V7" />
+                                            <circle cx="12" cy="12" r="10" />
+                                        </svg>
+                                        <span>caps lock</span>
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
