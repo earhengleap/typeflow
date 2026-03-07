@@ -1428,9 +1428,14 @@ export default function MonkeyTypePage() {
                         <div className="flex flex-col md:flex-row w-full gap-4 md:gap-8 flex-1 min-h-0">
 
                             {/* LEFT — WPM, Acc + Stats */}
-                            <div className="flex flex-col justify-between w-full md:w-[280px] md:shrink-0 md:border-r md:pr-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
+                            <div className="flex flex-col justify-between w-full md:w-[300px] md:shrink-0 md:border-r md:pr-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
                                 {/* WPM */}
-                                <div className="flex flex-col">
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1, duration: 0.4 }}
+                                    className="flex flex-col"
+                                >
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>wpm</span>
                                     <span className="text-[56px] sm:text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
                                     {/* Personal Best Badge */}
@@ -1438,13 +1443,14 @@ export default function MonkeyTypePage() {
                                         const { history } = useMonkeyTypeStore.getState();
                                         const prevBest = history
                                             .filter(h => h.mode === mode && h.config === config && h.language === language)
-                                            .slice(1) // skip the current run (first entry)
+                                            .slice(1)
                                             .reduce((max, h) => Math.max(max, h.wpm), 0);
                                         if (prevBest > 0 && stats.wpm > prevBest) {
                                             return (
                                                 <motion.div
                                                     initial={{ opacity: 0, scale: 0.8 }}
                                                     animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: 0.5 }}
                                                     className="flex items-center gap-1.5 mt-2 text-xs font-bold px-2.5 py-1 rounded-full w-fit"
                                                     style={{ backgroundColor: `${activeTheme.primary}20`, color: activeTheme.primary }}
                                                 >
@@ -1454,41 +1460,113 @@ export default function MonkeyTypePage() {
                                         }
                                         return null;
                                     })()}
-                                </div>
+                                </motion.div>
 
-                                {/* Acc */}
-                                <div className="flex flex-col mt-2 sm:mt-4">
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>acc</span>
-                                    <span className="text-[40px] sm:text-[56px] font-black leading-none tracking-tighter" style={{ color: activeTheme.text }}>{stats.accuracy}%</span>
-                                </div>
+                                {/* Accuracy with ring */}
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2, duration: 0.4 }}
+                                    className="flex items-center gap-4 mt-3 sm:mt-4"
+                                >
+                                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
+                                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke={`${activeTheme.textDim}20`} strokeWidth="3" />
+                                            <motion.circle
+                                                cx="18" cy="18" r="15.5" fill="none"
+                                                stroke={stats.accuracy >= 95 ? activeTheme.primary : stats.accuracy >= 80 ? activeTheme.text : activeTheme.error}
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                strokeDasharray={`${stats.accuracy * 0.9738} 97.38`}
+                                                initial={{ strokeDasharray: "0 97.38" }}
+                                                animate={{ strokeDasharray: `${stats.accuracy * 0.9738} 97.38` }}
+                                                transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-base sm:text-lg font-black" style={{ color: activeTheme.text }}>{stats.accuracy}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40" style={{ color: activeTheme.textDim }}>accuracy</span>
+                                        <span className="text-[10px] mt-1 opacity-50" style={{ color: activeTheme.textDim }}>
+                                            {stats.accuracy >= 95 ? "Excellent" : stats.accuracy >= 85 ? "Good" : stats.accuracy >= 70 ? "Average" : "Needs work"}
+                                        </span>
+                                    </div>
+                                </motion.div>
 
                                 {/* Divider */}
                                 <div className="my-3 sm:my-5 border-t" style={{ borderColor: `${activeTheme.textDim}15` }} />
 
+                                {/* Character Breakdown — visual */}
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3, duration: 0.4 }}
+                                    className="flex flex-col gap-2"
+                                >
+                                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-35" style={{ color: activeTheme.textDim }}>characters</span>
+                                    <div className="flex gap-3 flex-wrap">
+                                        {[
+                                            { label: "correct", value: stats.correctChars, color: activeTheme.primary },
+                                            { label: "incorrect", value: stats.incorrectChars, color: activeTheme.error },
+                                            { label: "extra", value: stats.extraChars, color: `${activeTheme.error}80` },
+                                            { label: "missed", value: stats.missedChars, color: activeTheme.textDim },
+                                        ].map((c, i) => (
+                                            <motion.div
+                                                key={c.label}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.4 + i * 0.08 }}
+                                                className="flex flex-col items-center px-3 py-2 rounded-lg"
+                                                style={{ backgroundColor: `${c.color}12` }}
+                                            >
+                                                <span className="text-lg font-black leading-none" style={{ color: c.color }}>{c.value}</span>
+                                                <span className="text-[8px] font-bold uppercase tracking-wider mt-1 opacity-60" style={{ color: c.color }}>{c.label}</span>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+
                                 {/* Secondary Stats */}
-                                <div className="flex flex-row md:flex-col gap-3 sm:gap-4 flex-1 flex-wrap">
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.4, duration: 0.4 }}
+                                    className="flex flex-row md:flex-col gap-3 sm:gap-4 flex-1 flex-wrap mt-3"
+                                >
                                     {[
                                         { label: "test type", value: `${mode} ${config}`, sub: language, primary: true },
-                                        { label: "raw", value: String(stats.rawWpm), primary: true },
-                                        { label: "characters", value: `${stats.correctChars}/${stats.incorrectChars}/${stats.extraChars}/${stats.missedChars}`, primary: false },
+                                        { label: "raw wpm", value: String(stats.rawWpm), primary: true },
                                         { label: "consistency", value: `${stats.consistency}%`, primary: false },
                                         { label: "time", value: `${chartData.length > 0 ? chartData[chartData.length - 1].second : 0}s`, primary: false },
                                     ].map((s, i) => (
-                                        <div key={i} className="flex flex-col">
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.5 + i * 0.06 }}
+                                            className="flex flex-col"
+                                        >
                                             <span className="text-[9px] font-bold uppercase tracking-widest opacity-35 mb-0.5" style={{ color: activeTheme.textDim }}>{s.label}</span>
                                             <span className="text-xl font-black leading-tight tracking-tighter" style={{ color: s.primary ? activeTheme.primary : activeTheme.text }}>
                                                 {s.value}
                                             </span>
                                             {s.sub && <span className="text-[10px] opacity-35 mt-0.5" style={{ color: activeTheme.textDim }}>{s.sub}</span>}
-                                        </div>
+                                        </motion.div>
                                     ))}
-                                </div>
+                                </motion.div>
                             </div>
 
                             {/* RIGHT — Graph */}
-                            <div className="flex-1 flex flex-col min-w-0 pt-2">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3, duration: 0.5 }}
+                                className="flex-1 flex flex-col min-w-0 pt-2"
+                            >
                                 <PerformanceChart data={chartData} theme={activeTheme} />
-                            </div>
+                            </motion.div>
                         </div>
 
                         {/* Bottom — Restart hint + button */}
