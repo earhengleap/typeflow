@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-mt-bg: var(--mt-bg);
+  --color-mt-bg-alt: var(--mt-bg-alt);
+  --color-mt-text: var(--mt-text);
+  --color-mt-text-dim: var(--mt-text-dim);
+  --color-mt-primary: var(--mt-primary);
+  --color-mt-error: var(--mt-error);
+  --font-hanuman: var(--font-hanuman);
+  --font-jetbrains: var(--font-jetbrains);
+}
+
+@layer utilities {
+  .font-hanuman {
+    font-family: var(--font-hanuman), ui-sans-serif, system-ui;
+  }
+}
+
+@layer base {
+  :root {
+    --theme-font: var(--font-jetbrains);
+    color-scheme: dark;
+    height: 100%;
+    background-color: var(--mt-bg);
+    color: var(--mt-text);
+  }
+
+  * {
+    @apply border-[#2a2a2a];
+  }
+
+  body {
+    font-family: var(--theme-font), monospace;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--mt-bg);
+    color: var(--mt-text);
+    selection-background-color: rgb(255 255 255 / 0.2);
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+}
