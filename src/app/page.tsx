@@ -642,8 +642,8 @@ export default function MonkeyTypePage() {
     }, [mode, setMode, setConfig, setLanguage, setTheme, resetTest]);
 
     const filteredCommands = useMemo(() => {
-        if (!searchQuery) return commands;
-        const q = searchQuery.toLowerCase();
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase().trim();
         return commands.filter(c => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
     }, [commands, searchQuery]);
 
@@ -985,7 +985,18 @@ export default function MonkeyTypePage() {
                                 <span className="text-xs opacity-50 px-2 py-1 rounded bg-black/20" style={{ color: activeTheme.textDim }}>ESC</span>
                             </div>
                             <div className="max-h-[60vh] overflow-y-auto py-2 custom-scrollbar">
-                                {filteredCommands.length === 0 ? (
+                                {searchQuery.trim() === '' ? (
+                                    <div className="px-6 py-10 text-center space-y-4">
+                                        <div className="text-sm opacity-40" style={{ color: activeTheme.textDim }}>
+                                            Type to search commands
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center text-[10px] font-mono opacity-30" style={{ color: activeTheme.textDim }}>
+                                            {['theme', 'mode', 'language', 'time', 'restart'].map(hint => (
+                                                <span key={hint} className="px-2 py-1 rounded" style={{ backgroundColor: activeTheme.bgAlt }}>{hint}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : filteredCommands.length === 0 ? (
                                     <div className="px-6 py-8 text-center opacity-50" style={{ color: activeTheme.textDim }}>
                                         No commands found matching "{searchQuery}"
                                     </div>
@@ -1001,7 +1012,26 @@ export default function MonkeyTypePage() {
                                             )}
                                             style={{ color: i === selectedIndex ? activeTheme.primary : activeTheme.text }}
                                         >
-                                            <span className="font-semibold">{cmd.label}</span>
+                                            <div className="flex items-center gap-3">
+                                                {cmd.category === 'Theme' && (
+                                                    <div className="flex gap-1">
+                                                        {(() => {
+                                                            const t = THEMES[cmd.id.replace('theme-', '') as Theme];
+                                                            return t ? (
+                                                                <>
+                                                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.bg, border: `1px solid ${t.textDim}` }} />
+                                                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.primary }} />
+                                                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.text }} />
+                                                                </>
+                                                            ) : null;
+                                                        })()}
+                                                    </div>
+                                                )}
+                                                <span className="font-semibold">{cmd.label}</span>
+                                                {cmd.category === 'Theme' && theme === cmd.id.replace('theme-', '') && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}>active</span>
+                                                )}
+                                            </div>
                                             <span className="text-xs px-2 py-1 rounded-full opacity-60" style={{ backgroundColor: activeTheme.bgAlt }}>
                                                 {cmd.category}
                                             </span>
@@ -1110,18 +1140,6 @@ export default function MonkeyTypePage() {
                                 <button onClick={() => { setLanguage("khmer"); resetTest(undefined, undefined, "khmer"); }} className={cn("py-1.5 sm:py-2 transition-all outline-none min-h-[36px] sm:min-h-0", language === "khmer" ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}>
                                     khmer
                                 </button>
-                            </div>
-
-                            <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
-                                {(Object.keys(THEMES) as Theme[]).map(t => (
-                                    <button
-                                        key={t}
-                                        onClick={() => setTheme(t)}
-                                        className={cn("py-1.5 sm:py-2 transition-all outline-none capitalize min-h-[36px] sm:min-h-0", theme === t ? "text-[var(--mt-primary)]" : "hover:text-[var(--mt-text)]")}
-                                    >
-                                        {t}
-                                    </button>
-                                ))}
                             </div>
                         </div>
 
