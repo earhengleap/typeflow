@@ -17,7 +17,18 @@ const WORD_POOL = [
     "number", "boolean", "null", "undefined", "symbol", "bigint", "operator", "expression", "statement", "loop",
     "condition", "switch", "case", "default", "try", "catch", "finally", "throw", "error", "event", "listener",
     "handler", "state", "props", "hook", "effect", "context", "reducer", "memo", "ref", "query", "mutation",
-    "api", "endpoint", "request", "response", "json", "xml", "html", "css", "scss", "less", "stylus"
+    "api", "endpoint", "request", "response", "json", "xml", "html", "css", "scss", "less", "stylus",
+    "render", "virtual", "shadow", "proxy", "reflect", "iterator", "generator", "prototype", "constructor",
+    "inheritance", "polymorphism", "encapsulation", "abstraction", "singleton", "factory", "observer", "pattern",
+    "architecture", "microservice", "monolith", "gateway", "loadbalancer", "cache", "redis", "queue", "stream",
+    "socket", "websocket", "protocol", "encryption", "authentication", "authorization", "token", "session",
+    "cookie", "header", "payload", "schema", "migration", "transaction", "index", "constraint", "normalize",
+    "aggregate", "pipeline", "transform", "validate", "sanitize", "escape", "encode", "decode", "compress",
+    "buffer", "channel", "thread", "process", "runtime", "compiler", "interpreter", "bytecode", "assembly",
+    "register", "memory", "pointer", "stack", "heap", "garbage", "collection", "reference", "scope", "chain",
+    "binding", "dispatch", "middleware", "resolver", "loader", "plugin", "extension", "widget", "component",
+    "template", "directive", "decorator", "annotation", "metadata", "reflection", "introspection", "dynamic",
+    "static", "immutable", "mutable", "reactive", "declarative", "imperative", "functional", "procedural"
 ];
 
 const KHMER_WORD_POOL = [
@@ -30,7 +41,13 @@ const KHMER_WORD_POOL = [
     "ភ្លេច", "គិត", "ស្មាន", "ជឿ", "សង្ឃឹម", "ចង់", "ត្រូវការ", "អាច", "គួរ", "មុខ",
     "ក្រោយ", "លើ", "ក្រោម", "ក្នុង", "ក្រៅ", "ឆ្វេង", "ស្តាំ", "កណ្តាល", "គៀន", "ជិត",
     "ឆ្ងាយ", "ដើរ", "រត់", "ឈរ", "អង្គុយ", "ដេក", "ញ៉ាំ", "ផឹក", "មើល", "ឃើញ",
-    "ទិញ", "លក់", "ចំណាយ", "ចំណេញ", "ខាត", "ថ្លៃ", "ថោក", "ប្រាក់", "លុយ", "ធនាគារ"
+    "ទិញ", "លក់", "ចំណាយ", "ចំណេញ", "ខាត", "ថ្លៃ", "ថោក", "ប្រាក់", "លុយ", "ធនាគារ",
+    "ផ្ទះ", "គ្រួសារ", "ម្តាយ", "ឪពុក", "បងប្រុស", "បងស្រី", "កូន", "ប្រពន្ធ", "ប្តី", "មិត្ត",
+    "សត្វ", "ឆ្កែ", "ឆ្មា", "បក្សី", "ត្រី", "ដំរី", "ខ្លា", "ក្រពើ", "សេះ", "គោ",
+    "ម្ហូប", "បាយ", "ទឹក", "ផ្លែឈើ", "បន្លែ", "សាច់", "ស៊ុប", "នំ", "កាហ្វេ", "តែ",
+    "ស្រស់", "ពិសេស", "ឆ្ងាញ់", "ផ្អែម", "ជូរ", "ប្រៃ", "ហឹរ", "ក្តៅ", "ត្រជាក់", "រដូវ",
+    "ភ្លៀង", "ខ្យល់", "ព្រះអាទិត្យ", "ព្រះច័ន្ទ", "ផ្កាយ", "មេឃ", "ទន្លេ", "សមុទ្រ", "ភ្នំ", "វាល",
+    "ប្រទេស", "ទីក្រុង", "ភូមិ", "ផ្លូវ", "ទីផ្សារ", "វត្ត", "សាលារៀន", "មន្ទីរពេទ្យ", "ស្ពាន", "រោងចក្រ"
 ];
 
 const KEYBOARD_ROWS = [
@@ -101,6 +118,42 @@ const THEMES: Record<Theme, { bg: string, bgAlt: string, text: string, textDim: 
         primary: "#d65d0e",
         error: "#cc241d",
         primaryRgb: "214,93,14"
+    },
+    nord: {
+        bg: "#2e3440",
+        bgAlt: "#3b4252",
+        text: "#eceff4",
+        textDim: "#4c566a",
+        primary: "#88c0d0",
+        error: "#bf616a",
+        primaryRgb: "136,192,208"
+    },
+    monokai: {
+        bg: "#272822",
+        bgAlt: "#1e1f1c",
+        text: "#f8f8f2",
+        textDim: "#75715e",
+        primary: "#a6e22e",
+        error: "#f92672",
+        primaryRgb: "166,226,46"
+    },
+    solarized: {
+        bg: "#002b36",
+        bgAlt: "#073642",
+        text: "#839496",
+        textDim: "#586e75",
+        primary: "#b58900",
+        error: "#dc322f",
+        primaryRgb: "181,137,0"
+    },
+    tokyonight: {
+        bg: "#1a1b26",
+        bgAlt: "#24283b",
+        text: "#c0caf5",
+        textDim: "#565f89",
+        primary: "#7aa2f7",
+        error: "#f7768e",
+        primaryRgb: "122,162,247"
     }
 };
 
@@ -395,6 +448,7 @@ export default function MonkeyTypePage() {
     // Init Caps Lock to false (SSR-safe), then hydrate from localStorage after mount
     const [isCapsLock, setIsCapsLock] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
+    const [isFocused, setIsFocused] = useState(true);
 
     // Hydrate from localStorage after client mount
     useEffect(() => {
@@ -473,7 +527,7 @@ export default function MonkeyTypePage() {
     }, [generateWords]);
 
     useEffect(() => {
-        let interval: any;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (isActive && mode === "time" && timeLeft > 0) {
             interval = setInterval(() => {
                 setTimeLeft(timeLeft - 1);
@@ -811,17 +865,17 @@ export default function MonkeyTypePage() {
             }
         };
 
+        const handleTabKeyUp = (e: KeyboardEvent) => {
+            if (e.key === "Tab") isTabHeld.current = false;
+        };
+
         window.addEventListener("keydown", handleGlobalKeyDown);
         window.addEventListener("keyup", handleGlobalKeyUp);
-        window.addEventListener("keyup", (e: KeyboardEvent) => {
-            if (e.key === "Tab") isTabHeld.current = false;
-        });
+        window.addEventListener("keyup", handleTabKeyUp);
         return () => {
             window.removeEventListener("keydown", handleGlobalKeyDown);
             window.removeEventListener("keyup", handleGlobalKeyUp);
-            window.removeEventListener("keyup", (e: KeyboardEvent) => {
-                if (e.key === "Tab") isTabHeld.current = false;
-            });
+            window.removeEventListener("keyup", handleTabKeyUp);
         };
     }, [isSearchOpen, filteredCommands, selectedIndex, language, isFinished]);
 
@@ -948,7 +1002,6 @@ export default function MonkeyTypePage() {
                 '--mt-text-dim': activeTheme.textDim,
                 '--mt-primary': activeTheme.primary,
                 '--mt-error': activeTheme.error,
-                '--mt-primary-rgb': activeTheme.primary === '#e2b714' ? '226,183,20' : activeTheme.primary === '#ff007f' ? '255,0,127' : activeTheme.primary === '#ff79c6' ? '255,121,198' : '214,93,14',
             } as React.CSSProperties}
         >
 
@@ -1172,15 +1225,20 @@ export default function MonkeyTypePage() {
                             )}
                         </AnimatePresence>
 
-                        <div className="h-8 flex justify-center items-center">
+                        <div className="h-8 flex justify-center items-center gap-4">
                             {isActive && (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-3xl font-bold text-[var(--mt-primary)] transition-colors duration-500">
-                                    {mode === "time" ? timeLeft : `${userInput.split(" ").length - 1}/${config}`
-                                    }
-                                </motion.div >
-                            )
-                            }
-                        </div >
+                                <>
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-3xl font-bold transition-colors duration-500" style={{ color: activeTheme.primary }}>
+                                        {mode === "time" ? timeLeft : `${userInput.split(" ").length - 1}/${config}`}
+                                    </motion.div>
+                                    {stats.wpm > 0 && (
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} className="text-lg font-bold transition-colors duration-500" style={{ color: activeTheme.text }}>
+                                            {stats.wpm} wpm
+                                        </motion.div>
+                                    )}
+                                </>
+                            )}
+                        </div>
 
                         {/* 3-Line Typing Window */}
                         <div
@@ -1246,11 +1304,35 @@ export default function MonkeyTypePage() {
                                 type="text"
                                 value={userInput}
                                 onChange={handleInputChange}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => setIsFocused(false)}
                                 className="absolute inset-0 w-full h-full opacity-0 outline-none cursor-default"
                                 autoFocus
                                 spellCheck={false}
                                 autoComplete="off"
                             />
+
+                            {/* Focus-lost overlay — like monkeytype.com */}
+                            <AnimatePresence>
+                                {!isFocused && !isFinished && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer backdrop-blur-[3px] rounded-lg"
+                                        onClick={() => inputRef.current?.focus()}
+                                    >
+                                        <div className="flex items-center gap-2 text-sm font-bold tracking-wider" style={{ color: activeTheme.textDim }}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M15 15l-2 5L9 9l11 4-5 2z" />
+                                                <path d="M18.5 18.5L22 22" />
+                                            </svg>
+                                            Click here or start typing
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div >
 
                         {/* Keyboard — Desktop only */}
@@ -1351,6 +1433,27 @@ export default function MonkeyTypePage() {
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>wpm</span>
                                     <span className="text-[56px] sm:text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
+                                    {/* Personal Best Badge */}
+                                    {(() => {
+                                        const { history } = useMonkeyTypeStore.getState();
+                                        const prevBest = history
+                                            .filter(h => h.mode === mode && h.config === config && h.language === language)
+                                            .slice(1) // skip the current run (first entry)
+                                            .reduce((max, h) => Math.max(max, h.wpm), 0);
+                                        if (prevBest > 0 && stats.wpm > prevBest) {
+                                            return (
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="flex items-center gap-1.5 mt-2 text-xs font-bold px-2.5 py-1 rounded-full w-fit"
+                                                    style={{ backgroundColor: `${activeTheme.primary}20`, color: activeTheme.primary }}
+                                                >
+                                                    🏆 New Personal Best!
+                                                </motion.div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
 
                                 {/* Acc */}

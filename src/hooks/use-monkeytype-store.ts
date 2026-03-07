@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 export type GameMode = "time" | "words";
 export type GameConfig = 15 | 30 | 60 | 120 | 10 | 25 | 50 | 100;
 export type Language = "english" | "khmer";
-export type Theme = "codex" | "cyberpunk" | "dracula" | "retro";
+export type Theme = "codex" | "cyberpunk" | "dracula" | "retro" | "nord" | "monokai" | "solarized" | "tokyonight";
 
 export interface TypingStats {
     wpm: number;
