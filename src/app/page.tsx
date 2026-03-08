@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Search } from "lucide-react";
+import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Search, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
@@ -381,6 +381,7 @@ export default function MonkeyTypePage() {
     const [isCapsLock, setIsCapsLock] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
     const [isFocused, setIsFocused] = useState(true);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     // Hydrate from localStorage after client mount
     useEffect(() => {
@@ -525,7 +526,7 @@ export default function MonkeyTypePage() {
 
         // Save to Global Leaderboard (Redis)
         if (stats.wpm > 0) {
-            saveLeaderboardResult(stats.wpm);
+            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm);
         }
     };
 
@@ -954,6 +955,15 @@ export default function MonkeyTypePage() {
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-1 sm:gap-2 justify-end flex-1 z-20">
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsLeaderboardOpen(true)}
+                            className="p-2 rounded-xl transition-all hover:bg-white/5 group"
+                            style={{ color: activeTheme.textDim }}
+                        >
+                            <Trophy className="w-5 h-5 group-hover:scale-110 transition-transform" style={{ color: activeTheme.textDim }} />
+                        </motion.button>
                         <UserMenu />
                     </div>
                 </div>
@@ -1553,7 +1563,12 @@ export default function MonkeyTypePage() {
                 )}
             </AnimatePresence >
 
-            <Leaderboard theme={activeTheme} />
+            <Leaderboard
+                theme={activeTheme}
+                isOpen={isLeaderboardOpen}
+                onClose={() => setIsLeaderboardOpen(false)}
+            />
+
             <div className="fixed bottom-3 sm:bottom-6 right-3 sm:right-6 text-[8px] sm:text-[10px] font-bold tracking-[0.3em] uppercase opacity-20 pointer-events-none" style={{ color: activeTheme.textDim }}>
                 TypeFlow 1.0
             </div>
