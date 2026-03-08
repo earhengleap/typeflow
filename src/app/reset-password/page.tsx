@@ -8,8 +8,9 @@ import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { resetPassword } from "@/app/actions/auth";
+import { Suspense } from "react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const { theme } = useMonkeyTypeStore();
     const activeTheme = THEMES[theme as keyof typeof THEMES] || THEMES.codex;
     const searchParams = useSearchParams();
@@ -76,6 +77,87 @@ export default function ResetPasswordPage() {
     };
 
     return (
+        <main className="flex-1 flex items-center justify-center p-6 z-10">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="w-full max-w-md flex flex-col gap-8"
+            >
+                <div className="flex items-center gap-3 text-2xl font-bold tracking-tight" style={{ color: activeTheme.text }}>
+                    <KeyRound size={28} style={{ color: activeTheme.primary }} />
+                    reset password
+                </div>
+
+                {error && (
+                    <div className="text-red-400 text-xs text-center font-bold px-4 py-3 rounded-lg bg-red-400/10">
+                        {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="text-green-400 text-xs text-center font-bold px-4 py-3 rounded-lg bg-green-400/10">
+                        {success}
+                    </div>
+                )}
+
+                {!success && token && (
+                    <form onSubmit={handleReset} className="flex flex-col gap-4">
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="new password"
+                                required
+                                value={passwordData.password}
+                                onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
+                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
+                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="verify password"
+                            required
+                            value={passwordData.verifyPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, verifyPassword: e.target.value })}
+                            className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
+                            style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] mt-4 shadow-lg cursor-pointer disabled:opacity-50"
+                            style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
+                        >
+                            <KeyRound size={20} />
+                            {isLoading ? "resetting..." : "reset password"}
+                        </button>
+                    </form>
+                )}
+
+                {!token && !error && (
+                    <div className="text-center opacity-40 text-sm">
+                        Please use the link sent to your email.
+                    </div>
+                )}
+            </motion.div>
+        </main>
+    );
+}
+
+export default function ResetPasswordPage() {
+    const { theme } = useMonkeyTypeStore();
+    const activeTheme = THEMES[theme as keyof typeof THEMES] || THEMES.codex;
+
+    return (
         <div
             className="min-h-screen flex flex-col font-mono transition-colors duration-500 overflow-x-hidden relative"
             style={{ backgroundColor: activeTheme.bg, color: activeTheme.textDim }}
@@ -98,79 +180,13 @@ export default function ResetPasswordPage() {
                 </Link>
             </header>
 
-            <main className="flex-1 flex items-center justify-center p-6 z-10">
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="w-full max-w-md flex flex-col gap-8"
-                >
-                    <div className="flex items-center gap-3 text-2xl font-bold tracking-tight" style={{ color: activeTheme.text }}>
-                        <KeyRound size={28} style={{ color: activeTheme.primary }} />
-                        reset password
-                    </div>
-
-                    {error && (
-                        <div className="text-red-400 text-xs text-center font-bold px-4 py-3 rounded-lg bg-red-400/10">
-                            {error}
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="text-green-400 text-xs text-center font-bold px-4 py-3 rounded-lg bg-green-400/10">
-                            {success}
-                        </div>
-                    )}
-
-                    {!success && token && (
-                        <form onSubmit={handleReset} className="flex flex-col gap-4">
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="new password"
-                                    required
-                                    value={passwordData.password}
-                                    onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
-                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="verify password"
-                                required
-                                value={passwordData.verifyPassword}
-                                onChange={(e) => setPasswordData({ ...passwordData, verifyPassword: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] mt-4 shadow-lg cursor-pointer disabled:opacity-50"
-                                style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
-                            >
-                                <KeyRound size={20} />
-                                {isLoading ? "resetting..." : "reset password"}
-                            </button>
-                        </form>
-                    )}
-
-                    {!token && !error && (
-                        <div className="text-center opacity-40 text-sm">
-                            Please use the link sent to your email.
-                        </div>
-                    )}
-                </motion.div>
-            </main>
+            <Suspense fallback={
+                <main className="flex-1 flex items-center justify-center p-6 z-10">
+                    <div className="animate-pulse opacity-20 text-sm">loading reset session...</div>
+                </main>
+            }>
+                <ResetPasswordContent />
+            </Suspense>
         </div>
     );
 }
