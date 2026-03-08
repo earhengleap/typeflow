@@ -6,12 +6,22 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { after } from "next/server";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Configure Nodemailer with Gmail SMTP
+const transporter = process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
+    ? nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+        },
+    })
+    : null;
+
 const baseUrl = (process.env.AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
-const emailFrom = process.env.EMAIL_FROM || "TypeFlow <onboarding@resend.dev>";
+const emailFrom = process.env.EMAIL_FROM || `"TypeFlow" <${process.env.GMAIL_USER}>`;
 
 // --- Email Template Components ---
 const EMAIL_STYLES = {
@@ -99,7 +109,7 @@ export async function registerUser(formData: FormData) {
         });
 
         // Send Welcome Email in background
-        if (resend) {
+        if (transporter) {
             after(async () => {
                 try {
                     const welcomeContent = `
@@ -113,7 +123,7 @@ export async function registerUser(formData: FormData) {
                         </div>
                     `;
 
-                    await resend.emails.send({
+                    await transporter.sendMail({
                         from: emailFrom,
                         to: email,
                         subject: "welcome to typeflow.",
@@ -124,7 +134,7 @@ export async function registerUser(formData: FormData) {
                 }
             });
         } else {
-            console.warn("[AUTH] Resend key missing, skipping background welcome email.");
+            console.warn("[AUTH] Nodemailer config missing, skipping welcome email.");
         }
 
         return { success: "Account created! You can now sign in." };
@@ -160,7 +170,7 @@ export async function forgotPassword(formData: FormData) {
         // Send Password Reset Email in background
         const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
-        if (resend) {
+        if (transporter) {
             after(async () => {
                 try {
                     const resetContent = `
@@ -178,7 +188,7 @@ export async function forgotPassword(formData: FormData) {
                         </div>
                     `;
 
-                    await resend.emails.send({
+                    await transporter.sendMail({
                         from: emailFrom,
                         to: email,
                         subject: "reset your password - typeflow.",
@@ -189,7 +199,7 @@ export async function forgotPassword(formData: FormData) {
                 }
             });
         } else {
-            console.warn("[AUTH] Resend key missing, reset link: ", resetUrl);
+            console.warn("[AUTH] Nodemailer config missing, reset link: ", resetUrl);
         }
 
         return { success: "If an account exists with this email, a reset link will be sent." };
