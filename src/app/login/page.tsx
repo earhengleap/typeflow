@@ -9,14 +9,16 @@ import { useState } from "react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import { forgotPassword } from "@/app/actions/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+    const router = useRouter();
     // Helper to login with credentials since we can't call it directly in 'use client' easily with standard signIn behavior if we want custom error handling
     const loginWithCredentials = async (email: string, password: string) => {
         return await signIn("credentials", {
             email,
             password,
-            redirect: true,
+            redirect: false,
             callbackUrl: "/",
         });
     };
@@ -84,8 +86,9 @@ export default function LoginPage() {
             if (result?.error) {
                 setError("Invalid email or password");
                 setIsLoading(false);
+            } else if (result?.ok) {
+                router.push("/");
             }
-            // If successful, Next-Auth will redirect automatically
         } catch (err) {
             setError("Something went wrong");
             setIsLoading(false);
@@ -219,17 +222,32 @@ export default function LoginPage() {
                                     className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
                                     style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </motion.div>
-                            <motion.input
-                                variants={itemVariants}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="verify password"
-                                required
-                                value={registerData.verifyPassword}
-                                onChange={(e) => setRegisterData({ ...registerData, verifyPassword: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
+                            <motion.div variants={itemVariants} className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="verify password"
+                                    required
+                                    value={registerData.verifyPassword}
+                                    onChange={(e) => setRegisterData({ ...registerData, verifyPassword: e.target.value })}
+                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
+                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </motion.div>
 
                             <motion.button
                                 variants={itemVariants}
