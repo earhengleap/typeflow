@@ -10,6 +10,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { saveTypingResult } from "@/app/actions/typing-results";
 import { saveLeaderboardResult } from "@/app/actions/leaderboard";
 import { Leaderboard } from "@/components/Leaderboard";
+import { Header } from "@/components/Header";
 
 const WORD_POOL = [
     "function", "variable", "constant", "component", "interface", "generic", "promise", "async", "await", "callback",
@@ -381,7 +382,6 @@ export default function MonkeyTypePage() {
     const [isCapsLock, setIsCapsLock] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
     const [isFocused, setIsFocused] = useState(true);
-    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     // Hydrate from localStorage after client mount
     useEffect(() => {
@@ -526,7 +526,11 @@ export default function MonkeyTypePage() {
 
         // Save to Global Leaderboard (Redis)
         if (stats.wpm > 0) {
-            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm);
+            const currentMode = config.toString();
+            // Save to all-time, weekly, and daily categories with the current language
+            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, "allTime", currentMode, language);
+            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, "weekly", currentMode, language);
+            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, "daily", currentMode, language);
         }
     };
 
@@ -943,31 +947,7 @@ export default function MonkeyTypePage() {
             } as React.CSSProperties}
         >
             {/* Header / Nav */}
-            <header className="relative w-full max-w-5xl mx-auto flex items-center pt-4 pb-2 z-10 px-4 md:px-0 mb-4">
-                <div className="flex w-full items-center">
-                    <div className="flex items-center gap-2 group flex-1">
-                        <Type className="w-8 h-8 transition-transform group-hover:scale-110" style={{ color: activeTheme.primary }} />
-                        <h1 className="text-[32px] tracking-tight font-bold ml-1 relative" style={{ color: activeTheme.textDim }}>
-                            <span style={{ color: activeTheme.text }}>type</span>flow
-                        </h1>
-                    </div>
-
-                    <div className="flex-1" />
-
-                    <div className="flex items-center gap-1 sm:gap-2 justify-end flex-1 z-20">
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setIsLeaderboardOpen(true)}
-                            className="p-2 rounded-xl transition-all hover:bg-white/5 group"
-                            style={{ color: activeTheme.textDim }}
-                        >
-                            <Trophy className="w-5 h-5 group-hover:scale-110 transition-transform" style={{ color: activeTheme.textDim }} />
-                        </motion.button>
-                        <UserMenu />
-                    </div>
-                </div>
-            </header>
+            <Header activeTheme={activeTheme} />
 
             {/* Local Command Palette */}
             <AnimatePresence>
@@ -1563,11 +1543,6 @@ export default function MonkeyTypePage() {
                 )}
             </AnimatePresence >
 
-            <Leaderboard
-                theme={activeTheme}
-                isOpen={isLeaderboardOpen}
-                onClose={() => setIsLeaderboardOpen(false)}
-            />
 
             <div className="fixed bottom-3 sm:bottom-6 right-3 sm:right-6 text-[8px] sm:text-[10px] font-bold tracking-[0.3em] uppercase opacity-20 pointer-events-none" style={{ color: activeTheme.textDim }}>
                 TypeFlow 1.0

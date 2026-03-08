@@ -3,10 +3,19 @@
 import { redis } from "@/db/redis";
 import { auth } from "@/auth";
 
-const LEADERBOARD_WPM_KEY = "typing_leaderboard_wpm_v2";
-const LEADERBOARD_METADATA_KEY = "typing_leaderboard_metadata_v2";
+const getLeaderboardKeys = (type: string, mode: string, language: string) => ({
+    wpm: `typing_leaderboard_${language}_${type}_${mode}_wpm`,
+    metadata: `typing_leaderboard_${language}_${type}_${mode}_metadata`
+});
 
-export async function saveLeaderboardResult(wpm: number, accuracy: number, rawWpm: number) {
+export async function saveLeaderboardResult(
+    wpm: number,
+    accuracy: number,
+    rawWpm: number,
+    type: "allTime" | "weekly" | "daily" = "allTime",
+    mode: string = "15",
+    language: string = "english"
+) {
     const session = await auth();
     if (!session?.user) return { error: "You must be signed in to submit results." };
     if (!process.env.UPSTASH_REDIS_REST_URL) return { error: "Redis not configured." };
@@ -17,12 +26,14 @@ export async function saveLeaderboardResult(wpm: number, accuracy: number, rawWp
     const userName = session.user.name || "Anonymous";
     const userImage = session.user.image || "";
 
+    const { wpm: wpmKey, metadata: metaKey } = getLeaderboardKeys(type, mode, language);
+
     try {
-        // Only update if it's the user's best WPM
-        const currentBest = await redis.zscore(LEADERBOARD_WPM_KEY, userId);
+        // Only update if it's the user's best WPM for this category/mode/language
+        const currentBest = await redis.zscore(wpmKey, userId);
 
         if (!currentBest || wpm > Number(currentBest)) {
-            await redis.zadd(LEADERBOARD_WPM_KEY, { score: wpm, member: userId });
+            await redis.zadd(wpmKey, { score: wpm, member: userId });
 
             const metadata = {
                 userId,
@@ -34,7 +45,7 @@ export async function saveLeaderboardResult(wpm: number, accuracy: number, rawWp
                 date: new Date().toISOString()
             };
 
-            await redis.hset(LEADERBOARD_METADATA_KEY, { [userId]: JSON.stringify(metadata) });
+            await redis.hset(metaKey, { [userId]: JSON.stringify(metadata) });
         }
 
         return { success: true };
@@ -44,24 +55,44 @@ export async function saveLeaderboardResult(wpm: number, accuracy: number, rawWp
     }
 }
 
-export async function getTopLeaderboard(limit = 25) {
+export async function getTopLeaderboard(
+    limit = 25,
+    type: "allTime" | "weekly" | "daily" = "allTime",
+    mode: string = "15",
+    language: string = "english"
+) {
     if (!process.env.UPSTASH_REDIS_REST_URL) return [];
 
+    const { wpm: wpmKey, metadata: metaKey } = getLeaderboardKeys(type, mode, language);
+
     try {
-        const userIds = await redis.zrange(LEADERBOARD_WPM_KEY, 0, limit - 1, {
+        const userIds = await redis.zrange(wpmKey, 0, limit - 1, {
             rev: true,
         }) as string[];
 
-        if (userIds.length === 0) return [];
+        if (!userIds || userIds.length === 0) return [];
 
         // Fetch metadata for all these users
-        const metadataList = await redis.hmget(LEADERBOARD_METADATA_KEY, ...userIds);
+        const metadataList = await redis.hmget(metaKey, ...userIds);
 
         if (!metadataList) return [];
 
-        return (metadataList as unknown as (string | null)[])
-            .filter((m): m is string => !!m)
-            .map(m => JSON.parse(m));
+        // Robust handling of metadataList - handle both array and object responses
+        const results = Array.isArray(metadataList)
+            ? metadataList
+            : Object.values(metadataList as Record<string, string | null>);
+
+        return results
+            .filter((m): m is string => !!m && typeof m === 'string')
+            .map(m => {
+                try {
+                    return JSON.parse(m);
+                } catch (e) {
+                    console.error("JSON Parse Error:", e, m);
+                    return null;
+                }
+            })
+            .filter(item => item !== null);
     } catch (error) {
         console.error("Redis Fetch Error:", error);
         return [];
