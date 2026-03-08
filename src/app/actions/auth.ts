@@ -9,7 +9,7 @@ import crypto from "crypto";
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
+const baseUrl = (process.env.AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
 const emailFrom = process.env.EMAIL_FROM || "TypeFlow <onboarding@resend.dev>";
 
 // --- Email Template Components ---
