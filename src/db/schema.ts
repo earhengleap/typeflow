@@ -9,7 +9,20 @@ export const users = pgTable("user", {
     email: text("email").unique(),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
+    password: text("password"), // Added for Credentials login
 });
+
+export const passwordResetTokens = pgTable(
+    "passwordResetToken",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => crypto.randomUUID()),
+        email: text("email").notNull(),
+        token: text("token").unique().notNull(),
+        expires: timestamp("expires", { mode: "date" }).notNull(),
+    }
+);
 
 export const accounts = pgTable(
     "account",

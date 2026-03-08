@@ -8,6 +8,13 @@
       "when": 1772953958244,
       "tag": "0000_vengeful_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772975231280,
+      "tag": "0001_regular_absorbing_man",
+      "breakpoints": true
     }
   ]
 }
