@@ -8,7 +8,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
 const emailFrom = process.env.EMAIL_FROM || "TypeFlow <onboarding@resend.dev>";
 
@@ -99,26 +99,30 @@ export async function registerUser(formData: FormData) {
 
         // Send Welcome Email
         try {
-            const welcomeContent = `
-                <h2 style="color: ${EMAIL_STYLES.text}; font-size: 20px; margin-bottom: 20px;">welcome to the club, ${name}</h2>
-                <p style="color: ${EMAIL_STYLES.textDim}; margin-bottom: 30px;">your account is ready. it's time to see how fast you can really flow. track your wpm, accuracy, and history across all your devices.</p>
-                
-                <div style="text-align: center; margin: 40px 0;">
-                    <a href="${baseUrl}/login" style="background-color: ${EMAIL_STYLES.primary}; color: ${EMAIL_STYLES.bg}; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; text-transform: lowercase; transition: all 0.2s;">
-                        launch typeflow
-                    </a>
-                </div>
-                
-                <p style="color: ${EMAIL_STYLES.textDim}; font-size: 13px; margin-top: 40px;">stay fast,</p>
-                <p style="color: ${EMAIL_STYLES.text}; font-size: 13px;">the typeflow team</p>
-            `;
+            if (resend) {
+                const welcomeContent = `
+                    <h2 style="color: ${EMAIL_STYLES.text}; font-size: 20px; margin-bottom: 20px;">welcome to the club, ${name}</h2>
+                    <p style="color: ${EMAIL_STYLES.textDim}; margin-bottom: 30px;">your account is ready. it's time to see how fast you can really flow. track your wpm, accuracy, and history across all your devices.</p>
+                    
+                    <div style="text-align: center; margin: 40px 0;">
+                        <a href="${baseUrl}/login" style="background-color: ${EMAIL_STYLES.primary}; color: ${EMAIL_STYLES.bg}; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; text-transform: lowercase; transition: all 0.2s;">
+                            launch typeflow
+                        </a>
+                    </div>
+                    
+                    <p style="color: ${EMAIL_STYLES.textDim}; font-size: 13px; margin-top: 40px;">stay fast,</p>
+                    <p style="color: ${EMAIL_STYLES.text}; font-size: 13px;">the typeflow team</p>
+                `;
 
-            await resend.emails.send({
-                from: emailFrom,
-                to: email,
-                subject: "welcome to typeflow.",
-                html: getEmailWrapper(welcomeContent),
-            });
+                await resend.emails.send({
+                    from: emailFrom,
+                    to: email,
+                    subject: "welcome to typeflow.",
+                    html: getEmailWrapper(welcomeContent),
+                });
+            } else {
+                console.warn("[AUTH] Resend API key missing, welcome email skipped.");
+            }
         } catch (emailError) {
             console.error("Failed to send welcome email:", emailError);
         }
@@ -157,30 +161,35 @@ export async function forgotPassword(formData: FormData) {
         const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
         try {
-            const resetContent = `
-                <h2 style="color: ${EMAIL_STYLES.text}; font-size: 20px; margin-bottom: 20px;">forgot your password?</h2>
-                <p style="color: ${EMAIL_STYLES.textDim}; margin-bottom: 30px;">we received a request to reset your password. if you didn't make this request, you can safely ignore this email.</p>
-                
-                <div style="text-align: center; margin: 40px 0;">
-                    <a href="${resetUrl}" style="background-color: ${EMAIL_STYLES.primary}; color: ${EMAIL_STYLES.bg}; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; text-transform: lowercase;">
-                        reset password
-                    </a>
-                </div>
-                
-                <div style="margin-top: 30px; padding: 20px; background-color: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                    <p style="color: ${EMAIL_STYLES.textDim}; font-size: 12px; margin-bottom: 10px;">or copy and paste this link:</p>
-                    <p style="color: ${EMAIL_STYLES.primary}; font-size: 11px; word-break: break-all; margin: 0;">${resetUrl}</p>
-                </div>
-                
-                <p style="color: ${EMAIL_STYLES.textDim}; font-size: 11px; margin-top: 40px;">note: this link will expire in 1 hour.</p>
-            `;
+            if (resend) {
+                const resetContent = `
+                    <h2 style="color: ${EMAIL_STYLES.text}; font-size: 20px; margin-bottom: 20px;">forgot your password?</h2>
+                    <p style="color: ${EMAIL_STYLES.textDim}; margin-bottom: 30px;">we received a request to reset your password. if you didn't make this request, you can safely ignore this email.</p>
+                    
+                    <div style="text-align: center; margin: 40px 0;">
+                        <a href="${resetUrl}" style="background-color: ${EMAIL_STYLES.primary}; color: ${EMAIL_STYLES.bg}; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; text-transform: lowercase;">
+                            reset password
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 20px; background-color: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <p style="color: ${EMAIL_STYLES.textDim}; font-size: 12px; margin-bottom: 10px;">or copy and paste this link:</p>
+                        <p style="color: ${EMAIL_STYLES.primary}; font-size: 11px; word-break: break-all; margin: 0;">${resetUrl}</p>
+                    </div>
+                    
+                    <p style="color: ${EMAIL_STYLES.textDim}; font-size: 11px; margin-top: 40px;">note: this link will expire in 1 hour.</p>
+                `;
 
-            await resend.emails.send({
-                from: emailFrom,
-                to: email,
-                subject: "reset your password - typeflow.",
-                html: getEmailWrapper(resetContent),
-            });
+                await resend.emails.send({
+                    from: emailFrom,
+                    to: email,
+                    subject: "reset your password - typeflow.",
+                    html: getEmailWrapper(resetContent),
+                });
+            } else {
+                console.warn("[AUTH] Resend API key missing, password reset email skipped.");
+                console.log(`[AUTH] Local reset link for testing: ${resetUrl}`);
+            }
         } catch (emailError) {
             console.error("Failed to send reset email:", emailError);
         }
