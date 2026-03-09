@@ -1,4 +1,4 @@
-import { boolean, timestamp, pgTable, text, primaryKey, integer, varchar } from "drizzle-orm/pg-core";
+import { boolean, timestamp, pgTable, text, primaryKey, integer, varchar, jsonb } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
 export const users = pgTable("user", {
@@ -9,7 +9,32 @@ export const users = pgTable("user", {
     email: text("email").unique(),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
-    password: text("password"), // Added for Credentials login
+    password: text("password"),
+    bio: text("bio"),
+    keyboard: text("keyboard"),
+    level: integer("level").default(1).notNull(),
+    xp: integer("xp").default(0).notNull(),
+    streak: integer("streak").default(0).notNull(),
+    testsStarted: integer("tests_started").default(0).notNull(),
+    testsCompleted: integer("tests_completed").default(0).notNull(),
+    typingTime: integer("typing_time").default(0).notNull(), // in seconds
+    lastTestAt: timestamp("last_test_at", { mode: "date" }),
+    joinedAt: timestamp("joined_at", { mode: "date" }).defaultNow().notNull(),
+    settings: jsonb("settings").default({
+        appearance: { theme: "codex", font: "inter", fontSize: 16 },
+        gameplay: { showWpm: true, showAccuracy: true, sound: true },
+    }).notNull(),
+});
+
+export const userAchievements = pgTable("user_achievement", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
+    achievementId: varchar("achievement_id", { length: 100 }).notNull(),
+    unlockedAt: timestamp("unlocked_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const passwordResetTokens = pgTable(
@@ -75,7 +100,7 @@ export const typingResults = pgTable("typing_result", {
     id: text("id")
         .primaryKey()
         .$defaultFn(() => crypto.randomUUID()),
-    userId: text("userId")
+    userId: text("user_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
     wpm: integer("wpm").notNull(),

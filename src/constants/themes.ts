@@ -3,7 +3,7 @@ export const THEMES = {
         bg: "#323437",
         bgAlt: "#2c2e31",
         text: "#d1d0c5",
-        textDim: "#646669",
+        textDim: "#91918e",
         primary: "#e2b714",
         error: "#ca4754",
         primaryRgb: "226,183,20"
@@ -12,7 +12,7 @@ export const THEMES = {
         bg: "#10101a",
         bgAlt: "#1a1a2e",
         text: "#f0f0f0",
-        textDim: "#4f4f6a",
+        textDim: "#7a7aa6",
         primary: "#ff007f",
         error: "#00f0ff",
         primaryRgb: "255,0,127"
@@ -21,7 +21,7 @@ export const THEMES = {
         bg: "#282a36",
         bgAlt: "#21222c",
         text: "#f8f8f2",
-        textDim: "#6272a4",
+        textDim: "#9aa9d4",
         primary: "#ff79c6",
         error: "#ff5555",
         primaryRgb: "255,121,198"
@@ -30,7 +30,7 @@ export const THEMES = {
         bg: "#e4dccb",
         bgAlt: "#d1c7b3",
         text: "#3c3836",
-        textDim: "#928374",
+        textDim: "#7c6f64",
         primary: "#d65d0e",
         error: "#cc241d",
         primaryRgb: "214,93,14"
@@ -39,7 +39,7 @@ export const THEMES = {
         bg: "#2e3440",
         bgAlt: "#3b4252",
         text: "#eceff4",
-        textDim: "#4c566a",
+        textDim: "#81a1c1",
         primary: "#88c0d0",
         error: "#bf616a",
         primaryRgb: "136,192,208"
@@ -48,7 +48,7 @@ export const THEMES = {
         bg: "#272822",
         bgAlt: "#1e1f1c",
         text: "#f8f8f2",
-        textDim: "#75715e",
+        textDim: "#a59f85",
         primary: "#a6e22e",
         error: "#f92672",
         primaryRgb: "166,226,46"
@@ -57,7 +57,7 @@ export const THEMES = {
         bg: "#002b36",
         bgAlt: "#073642",
         text: "#839496",
-        textDim: "#586e75",
+        textDim: "#93a1a1",
         primary: "#b58900",
         error: "#dc322f",
         primaryRgb: "181,137,0"
@@ -66,7 +66,7 @@ export const THEMES = {
         bg: "#1a1b26",
         bgAlt: "#24283b",
         text: "#c0caf5",
-        textDim: "#565f89",
+        textDim: "#787c99",
         primary: "#7aa2f7",
         error: "#f7768e",
         primaryRgb: "122,162,247"

@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Search, Trophy } from "lucide-react";
+import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Search, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import { UserMenu } from "@/components/UserMenu";
-import { saveTypingResult } from "@/app/actions/typing-results";
+import { saveTypingResult, incrementTestsStarted, getGhostRun } from "@/app/actions/typing-results";
+import { ACHIEVEMENTS } from "@/constants/achievements";
 import { saveLeaderboardResult } from "@/app/actions/leaderboard";
 import { Leaderboard } from "@/components/Leaderboard";
 import { Header } from "@/components/Header";
@@ -366,6 +367,7 @@ const Keyboard = React.memo(({
 export default function MonkeyTypePage() {
     const {
         mode, config, language, theme, stats, chartData, timeLeft, isActive, isFinished, isWrongKeyboardLayout,
+        soundEnabled, showLiveWpm, showLiveAccuracy, fontSize, fontFamily,
         setIsActive, setIsFinished, setTimeLeft, setStats, setChartData, resetLiveState, addHistory,
         setMode, setConfig, setLanguage, setTheme, setIsWrongKeyboardLayout
     } = useMonkeyTypeStore();
@@ -382,6 +384,9 @@ export default function MonkeyTypePage() {
     const [isCapsLock, setIsCapsLock] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
     const [isFocused, setIsFocused] = useState(true);
+    const [xpResult, setXpResult] = useState<{ gained: number, levelUp: boolean, newAchievements?: string[] } | null>(null);
+    const [ghost, setGhost] = useState<{ wpm: number, userName: string | null } | null>(null);
+    const [ghostPos, setGhostPos] = useState({ top: 0, left: 0, charIndex: 0 });
 
     // Hydrate from localStorage after client mount
     useEffect(() => {
@@ -427,6 +432,7 @@ export default function MonkeyTypePage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const wordsRef = useRef<HTMLDivElement>(null);
     const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
+    const ghostTimerRef = useRef<NodeJS.Timeout | null>(null);
     const restartRef = useRef<HTMLButtonElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -436,6 +442,29 @@ export default function MonkeyTypePage() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
+
+    const playClickSound = useCallback(() => {
+        if (!soundEnabled) return;
+        try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150 + Math.random() * 50, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+
+            setTimeout(() => audioCtx.close(), 100);
+        } catch (e) { }
+    }, [soundEnabled]);
 
     const targetText = useMemo(() => {
         return words.join(" ");
@@ -506,14 +535,53 @@ export default function MonkeyTypePage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive, isFinished]);
 
+    // Ghost Simulation Effect
+    useEffect(() => {
+        if (!isActive || !ghost || isFinished) {
+            setGhostPos({ top: 0, left: 0, charIndex: 0 });
+            return;
+        }
+
+        const charsPerSec = (ghost.wpm * 5) / 60;
+        const interval = setInterval(() => {
+            const elapsed = (Date.now() - (startTime || Date.now())) / 1000;
+            const charIndex = Math.min(Math.floor(elapsed * charsPerSec), targetText.length);
+
+            const charEl = charRefs.current[charIndex];
+            if (charEl && wordsRef.current) {
+                const rect = charEl.getBoundingClientRect();
+                const containerRect = wordsRef.current.getBoundingClientRect();
+                setGhostPos({
+                    top: rect.top - containerRect.top,
+                    left: rect.left - containerRect.left,
+                    charIndex
+                });
+            }
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [isActive, ghost, isFinished, startTime, targetText.length]);
+
     const startTest = () => {
         setIsActive(true);
         setStartTime(Date.now());
+        incrementTestsStarted(); // Track test start
+
+        // Fetch Ghost
+        getGhostRun(mode, config as number, language).then(res => {
+            if (res.success && res.ghost) {
+                setGhost(res.ghost);
+            }
+        });
     };
 
     const finishTest = () => {
         setIsActive(false);
         setIsFinished(true);
+
+        const elapsedMs = Date.now() - (startTime || Date.now());
+        const durationSeconds = Math.floor(elapsedMs / 1000);
+
         addHistory({
             wpm: stats.wpm,
             rawWpm: stats.rawWpm,
@@ -521,7 +589,27 @@ export default function MonkeyTypePage() {
             mode,
             config,
             language,
-            theme
+            theme,
+        });
+
+        // Save to Database
+        saveTypingResult({
+            wpm: stats.wpm,
+            rawWpm: stats.rawWpm,
+            accuracy: stats.accuracy,
+            mode,
+            config,
+            language,
+            theme,
+            duration: durationSeconds,
+        }).then(res => {
+            if (res.success && res.xpGained) {
+                setXpResult({
+                    gained: res.xpGained,
+                    levelUp: !!res.levelUp,
+                    newAchievements: res.newAchievements
+                });
+            }
         });
 
         // Save to Global Leaderboard (Redis)
@@ -540,6 +628,7 @@ export default function MonkeyTypePage() {
         if (isFinished) return;
 
         setUserInput(value);
+        playClickSound();
 
         // Calculate live stats
         let correct = 0;
@@ -607,6 +696,7 @@ export default function MonkeyTypePage() {
         resetLiveState(targetMode === "time" ? (targetConfig as number) : 30);
         setLineOffset(0);
         setCaretPos({ top: 0, left: 0 });
+        setXpResult(null);
         setTimeout(() => inputRef.current?.focus(), 50);
     }, [generateWords, mode, config, language, resetLiveState]);
 
@@ -912,7 +1002,7 @@ export default function MonkeyTypePage() {
             const charRect = activeCharElement.getBoundingClientRect();
             const containerRect = wordsRef.current.getBoundingClientRect();
 
-            const lineHeight = language === "khmer" ? 58 : 40;
+            const lineHeightVal = language === "khmer" ? 58 : (fontSize * 1.6);
             setCaretPos({
                 top: charRect.top - containerRect.top + lineOffset,
                 left: charRect.left - containerRect.left
@@ -920,9 +1010,9 @@ export default function MonkeyTypePage() {
 
             // Smart 3-line scroll logic: shift when we enter the 3rd line
             const relativeTop = charRect.top - containerRect.top + lineOffset;
-            const scrollThreshold = lineHeight * 1.5;
+            const scrollThreshold = lineHeightVal * 1.5;
             if (relativeTop > scrollThreshold) {
-                setLineOffset(prev => prev - lineHeight);
+                setLineOffset(prev => prev - lineHeightVal);
             }
         }
     }, [userInput, words, clusters, clusterIndexes, lineOffset]);
@@ -1175,9 +1265,14 @@ export default function MonkeyTypePage() {
                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-3xl font-bold transition-colors duration-500" style={{ color: activeTheme.primary }}>
                                         {mode === "time" ? timeLeft : `${userInput.split(" ").length - 1}/${config}`}
                                     </motion.div>
-                                    {stats.wpm > 0 && (
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} className="text-lg font-bold transition-colors duration-500" style={{ color: activeTheme.text }}>
+                                    {showLiveWpm && stats.wpm > 0 && (
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} className="text-xl font-bold transition-colors duration-500" style={{ color: activeTheme.text }}>
                                             {stats.wpm} wpm
+                                        </motion.div>
+                                    )}
+                                    {showLiveAccuracy && stats.accuracy > 0 && (
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} className="text-lg font-bold transition-colors duration-500" style={{ color: activeTheme.textDim }}>
+                                            {stats.accuracy}%
                                         </motion.div>
                                     )}
                                 </>
@@ -1188,7 +1283,7 @@ export default function MonkeyTypePage() {
                         <div
                             className="relative overflow-hidden w-full px-1 sm:px-4 transition-all duration-500 typing-fade-bottom"
                             style={{
-                                height: language === "khmer" ? "174px" : "120px",
+                                height: language === "khmer" ? "174px" : `${fontSize * 1.6 * 3}px`,
                             }}
                         >
                             <motion.div
@@ -1197,8 +1292,9 @@ export default function MonkeyTypePage() {
                                 ref={wordsRef}
                                 className="relative tracking-tight"
                                 style={{
-                                    fontSize: language === "khmer" ? 'var(--khmer-font-size)' : 'var(--typing-font-size)',
-                                    lineHeight: language === "khmer" ? 'var(--khmer-line-height)' : 'var(--typing-line-height)',
+                                    fontSize: language === "khmer" ? 'var(--khmer-font-size)' : `${fontSize}px`,
+                                    lineHeight: language === "khmer" ? 'var(--khmer-line-height)' : `${fontSize * 1.6}px`,
+                                    fontFamily: fontFamily === 'monospace' ? 'inherit' : fontFamily
                                 }}
                             >
                                 {/* Smooth Caret */}
@@ -1211,10 +1307,28 @@ export default function MonkeyTypePage() {
                                     )}
                                     style={{
                                         backgroundColor: 'var(--mt-primary)',
-                                        height: language === "khmer" ? '34px' : '28px',
-                                        marginTop: language === "khmer" ? '6px' : '6px',
+                                        height: language === "khmer" ? '34px' : `${fontSize * 1.1}px`,
+                                        marginTop: language === "khmer" ? '6px' : `${fontSize * 0.25}px`,
                                     }}
                                 />
+
+                                {/* Ghost Caret */}
+                                {ghost && isActive && (
+                                    <motion.div
+                                        animate={{ top: ghostPos.top, left: ghostPos.left }}
+                                        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                                        className="absolute w-[2px] rounded-full z-[5] pointer-events-none opacity-40 flex flex-col items-center"
+                                        style={{
+                                            backgroundColor: activeTheme.text,
+                                            height: language === "khmer" ? '34px' : `${fontSize * 1.1}px`,
+                                            marginTop: language === "khmer" ? '6px' : `${fontSize * 0.25}px`,
+                                        }}
+                                    >
+                                        <div className="absolute bottom-full mb-1 whitespace-nowrap text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-black/40 text-white backdrop-blur-sm border border-white/10 scale-90 origin-bottom">
+                                            {ghost.userName || "Ghost"}
+                                        </div>
+                                    </motion.div>
+                                )}
 
                                 {/* Words Grid */}
                                 <div className={cn("flex flex-wrap w-full", language === "khmer" ? "font-hanuman" : "")}>
@@ -1336,8 +1450,8 @@ export default function MonkeyTypePage() {
                             })()}
                         </div>
 
-                        <div className="flex flex-col items-center gap-3 sm:gap-6 mt-2 sm:mt-4 opacity-50">
-                            <div className="hidden sm:flex text-[10px] text-[var(--mt-text-dim)] tracking-[0.2em] uppercase gap-8">
+                        <div className="flex flex-col items-center gap-3 sm:gap-6 mt-2 sm:mt-4">
+                            <div className="hidden sm:flex text-xs font-bold tracking-[0.2em] uppercase gap-8" style={{ color: activeTheme.textDim }}>
                                 <span><span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded mr-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Tab</span> + <span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Enter</span> Restart</span>
                                 <span><span className="text-[var(--mt-primary)] font-bold px-1.5 py-0.5 rounded mr-1" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>Esc</span> Quick Reset</span>
                             </div>
@@ -1380,9 +1494,8 @@ export default function MonkeyTypePage() {
                                     transition={{ delay: 0.1, duration: 0.4 }}
                                     className="flex flex-col"
                                 >
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>wpm</span>
+                                    <span className="text-xs font-bold uppercase tracking-[0.2em] mb-1 opacity-60" style={{ color: activeTheme.textDim }}>wpm</span>
                                     <span className="text-[56px] sm:text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
-                                    {/* Personal Best Badge */}
                                     {(() => {
                                         const { history } = useMonkeyTypeStore.getState();
                                         const prevBest = history
@@ -1404,6 +1517,56 @@ export default function MonkeyTypePage() {
                                         }
                                         return null;
                                     })()}
+
+                                    {/* XP Gained */}
+                                    <AnimatePresence>
+                                        {xpResult && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="flex flex-col gap-1 mt-4"
+                                            >
+                                                <div className="flex items-center gap-2 text-sm font-bold" style={{ color: activeTheme.primary }}>
+                                                    <Zap size={14} fill="currentColor" />
+                                                    +{xpResult.gained} XP
+                                                </div>
+                                                {xpResult.levelUp && (
+                                                    <motion.div
+                                                        initial={{ scale: 0.9 }}
+                                                        animate={{ scale: [1, 1.1, 1] }}
+                                                        className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 w-fit"
+                                                        style={{ color: activeTheme.primary }}
+                                                    >
+                                                        Level Up! 🚀
+                                                    </motion.div>
+                                                )}
+                                                {xpResult.newAchievements && xpResult.newAchievements.length > 0 && (
+                                                    <div className="flex flex-col gap-2 mt-2">
+                                                        {xpResult.newAchievements.map(id => {
+                                                            const ach = ACHIEVEMENTS[id];
+                                                            if (!ach) return null;
+                                                            return (
+                                                                <motion.div
+                                                                    key={id}
+                                                                    initial={{ x: -20, opacity: 0 }}
+                                                                    animate={{ x: 0, opacity: 1 }}
+                                                                    className="flex items-center gap-2 p-2 rounded-xl border border-white/5 bg-white/5"
+                                                                >
+                                                                    <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${ach.color}20`, color: ach.color }}>
+                                                                        <ach.icon size={14} />
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: activeTheme.text }}>Achievement Unlocked!</span>
+                                                                        <span className="text-[10px] font-bold opacity-60" style={{ color: ach.color }}>{ach.name}</span>
+                                                                    </div>
+                                                                </motion.div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </motion.div>
 
                                 {/* Accuracy with ring */}

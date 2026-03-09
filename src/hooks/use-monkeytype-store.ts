@@ -64,6 +64,14 @@ interface MonkeyTypeState {
     setIsWrongKeyboardLayout: (isWrong: boolean) => void;
     resetLiveState: (defaultTime?: number) => void;
 
+    // Settings
+    soundEnabled: boolean;
+    showLiveWpm: boolean;
+    showLiveAccuracy: boolean;
+    fontSize: number;
+    fontFamily: string;
+    setSettings: (settings: Partial<{ soundEnabled: boolean, showLiveWpm: boolean, showLiveAccuracy: boolean, fontSize: number, fontFamily: string }>) => void;
+
     // History
     history: RunHistory[];
     addHistory: (run: Omit<RunHistory, "id" | "date">) => void;
@@ -125,6 +133,13 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 isWrongKeyboardLayout: false
             }),
 
+            soundEnabled: true,
+            showLiveWpm: true,
+            showLiveAccuracy: true,
+            fontSize: 24,
+            fontFamily: 'monospace',
+            setSettings: (settings) => set((state) => ({ ...state, ...settings })),
+
             history: [],
             addHistory: (run) => set((state) => {
                 const newRun: RunHistory = {
@@ -144,8 +159,13 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 config: state.config,
                 language: state.language,
                 theme: state.theme,
-                history: state.history
-            }), // Only persist config, theme and history (live stats are volatile)
+                history: state.history,
+                soundEnabled: state.soundEnabled,
+                showLiveWpm: state.showLiveWpm,
+                showLiveAccuracy: state.showLiveAccuracy,
+                fontSize: state.fontSize,
+                fontFamily: state.fontFamily,
+            }), // Persist settings and history
         }
     )
 );
