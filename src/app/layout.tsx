@@ -49,7 +49,7 @@ export default function RootLayout({
         className={`${jetbrainsMono.variable} ${hanuman.variable} antialiased`}
         suppressHydrationWarning
       >
-        <SessionProvider>
+        <SessionProvider refetchOnWindowFocus={false}>
           {children}
         </SessionProvider>
       </body>

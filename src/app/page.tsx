@@ -1025,9 +1025,9 @@ export default function MonkeyTypePage() {
 
     if (!hasMounted) {
         return (
-            <div className="min-h-screen theme-transition flex flex-col items-center justify-center" style={{ backgroundColor: THEMES.codex.bg }}>
+            <div className="min-h-screen theme-transition flex flex-col items-center justify-center" style={{ backgroundColor: THEMES.codex.bg }} suppressHydrationWarning>
                 {/* Minimal loader or skeleton while hydrating */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" suppressHydrationWarning>
                     <Type className="w-8 h-8 animate-pulse" style={{ color: THEMES.codex.primary }} />
                     <h1 className="text-[32px] tracking-tight font-bold" style={{ color: THEMES.codex.text }}>type<span style={{ color: THEMES.codex.textDim }}>flow</span></h1>
                 </div>
