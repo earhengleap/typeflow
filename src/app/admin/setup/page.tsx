@@ -32,7 +32,7 @@ export default function AdminSetupPage() {
         if (res.success) {
             setStatus("success");
             // Force a session update to pick up the new role
-            await update();
+            await update({ role: "admin" });
             setTimeout(() => {
                 router.push("/admin/notifications");
             }, 2000);

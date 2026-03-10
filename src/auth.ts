@@ -25,8 +25,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 token.role = user.role as string;
             }
             if (trigger === "update" && (session?.level || session?.role)) {
-                if (session.level) token.level = session.level;
-                if (session.role) token.role = session.role;
+                if (session.level !== undefined) token.level = session.level;
+                if (session.role !== undefined) token.role = session.role;
             }
             return token;
         },
