@@ -410,10 +410,309 @@ Keyboard.displayName = "Keyboard";
 export default function MonkeyTypePage() {
     const {
         mode, config, language, theme, stats, chartData, timeLeft, isActive, isFinished, isWrongKeyboardLayout,
-        soundEnabled, showLiveWpm, showLiveAccuracy, fontSize, fontFamily,
+        soundEnabled, showLiveWpm, showLiveAccuracy, fontSize, fontFamily, soundType, soundVolume, soundOnError, playTimeWarning,
         setIsActive, setIsFinished, setTimeLeft, setStats, setChartData, resetLiveState, addHistory,
-        setMode, setConfig, setLanguage, setTheme, setIsWrongKeyboardLayout
+        setMode, setConfig, setLanguage, setTheme, setIsWrongKeyboardLayout, setSettings
     } = useMonkeyTypeStore();
+
+    // -- Advance Sound System --
+    const playClickSound = useCallback((forceType?: string) => {
+        if (!soundEnabled && !forceType) return;
+        const type = forceType || soundType;
+
+        try {
+            const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+            const audioCtx = new AudioContextClass();
+            const masterGain = audioCtx.createGain();
+            masterGain.connect(audioCtx.destination);
+            masterGain.gain.setValueAtTime(soundVolume * 0.2, audioCtx.currentTime); // Scaled volume
+
+            const now = audioCtx.currentTime;
+
+            const playMechanical = (freq: number, decay: number, noiseAmt: number = 0.5) => {
+                const osc = audioCtx.createOscillator();
+                const noise = audioCtx.createBufferSource();
+                const bufferSize = audioCtx.sampleRate * 0.05;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1000;
+
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(noiseAmt, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.02);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                const oscGain = audioCtx.createGain();
+                oscGain.gain.setValueAtTime(0.1, now);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(masterGain);
+                osc.connect(oscGain);
+                oscGain.connect(masterGain);
+
+                osc.start(now);
+                osc.stop(now + decay);
+                noise.start(now);
+                noise.stop(now + 0.05);
+            };
+
+            switch (type) {
+                case 'cherry_blue': playMechanical(1200, 0.05, 0.8); break;
+                case 'cherry_brown': playMechanical(400, 0.08, 0.3); break;
+                case 'cherry_red': playMechanical(200, 0.1, 0.1); break;
+                case 'mechanical': playMechanical(300 + Math.random() * 50, 0.05); break;
+                case 'plastic': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.05, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.03);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.03);
+                    break;
+                }
+                case 'wood': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(120, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.2, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.1);
+                    break;
+                }
+                case 'metal': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(2500, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.02, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.2);
+                    break;
+                }
+                case 'bubble': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.05);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.05);
+                    break;
+                }
+                case 'typewriter': {
+                    playMechanical(1500, 0.02, 0.9);
+                    const bell = audioCtx.createOscillator();
+                    bell.type = 'sine';
+                    bell.frequency.setValueAtTime(3000, now);
+                    const bg = audioCtx.createGain();
+                    bg.gain.setValueAtTime(0.05, now);
+                    bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+                    bell.connect(bg);
+                    bg.connect(masterGain);
+                    bell.start(); bell.stop(now + 0.1);
+                    break;
+                }
+                case 'water': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.15);
+                    break;
+                }
+                case 'paper': {
+                    const noise = audioCtx.createBufferSource();
+                    const bSize = audioCtx.sampleRate * 0.1;
+                    const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+                    const d = b.getChannelData(0);
+                    for (let i = 0; i < bSize; i++) d[i] = Math.random() * 2 - 1;
+                    noise.buffer = b;
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.05, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.08);
+                    noise.connect(g);
+                    g.connect(masterGain);
+                    noise.start(); noise.stop(now + 0.08);
+                    break;
+                }
+                case 'stone': playMechanical(80, 0.15, 0.4); break;
+                case 'glass': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(4000, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.03, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.05);
+                    break;
+                }
+                case 'bamboo': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.02);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.02);
+                    break;
+                }
+                case 'space': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.03, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.2);
+                    break;
+                }
+                case 'beep': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(880, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.02, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.1);
+                    break;
+                }
+                case 'snap': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(2000, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.01);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.01);
+                    break;
+                }
+                case 'pop': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(100, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.05);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.05);
+                    break;
+                }
+                case 'tink': {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(3200, now);
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.05, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start(); osc.stop(now + 0.05);
+                    break;
+                }
+                case 'clack': playMechanical(200, 0.03, 0.9); break;
+                case 'thud': playMechanical(60, 0.2, 0.2); break;
+                default:
+                    playMechanical(300 + Math.random() * 50, 0.05);
+            }
+
+            setTimeout(() => audioCtx.close(), 500);
+        } catch (err) {
+            console.error("Audio error:", err);
+        }
+    }, [soundEnabled, soundType, soundVolume]);
+
+    const playErrorSound = useCallback(() => {
+        if (!soundOnError) return;
+        try {
+            const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+            const audioCtx = new AudioContextClass();
+            const g = audioCtx.createGain();
+            g.connect(audioCtx.destination);
+            g.gain.setValueAtTime(soundVolume * 0.1, audioCtx.currentTime);
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.1);
+
+            const eg = audioCtx.createGain();
+            eg.gain.setValueAtTime(0.1, now);
+            eg.gain.linearRampToValueAtTime(0, now + 0.1);
+
+            osc.connect(eg);
+            eg.connect(g);
+            osc.start();
+            osc.stop(now + 0.1);
+            setTimeout(() => audioCtx.close(), 200);
+        } catch { }
+    }, [soundOnError, soundVolume]);
+
+    const playWarningSound = useCallback(() => {
+        if (!playTimeWarning) return;
+        try {
+            const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+            const audioCtx = new AudioContextClass();
+            const g = audioCtx.createGain();
+            g.connect(audioCtx.destination);
+            g.gain.setValueAtTime(soundVolume * 0.15, audioCtx.currentTime);
+            const now = audioCtx.currentTime;
+
+            const playNote = (freq: number, start: number) => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + start);
+                const eg = audioCtx.createGain();
+                eg.gain.setValueAtTime(0.1, now + start);
+                eg.gain.exponentialRampToValueAtTime(0.001, now + start + 0.2);
+                osc.connect(eg);
+                eg.connect(g);
+                osc.start(now + start);
+                osc.stop(now + start + 0.2);
+            };
+
+            playNote(880, 0);
+            playNote(1100, 0.1);
+            setTimeout(() => audioCtx.close(), 500);
+        } catch { }
+    }, [playTimeWarning, soundVolume]);
 
     const [words, setWords] = useState<string[]>([]);
     const [userInput, setUserInput] = useState("");
@@ -422,7 +721,6 @@ export default function MonkeyTypePage() {
     const [caretPos, setCaretPos] = useState({ top: 0, left: 0 });
     const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
     const [errorKey, setErrorKey] = useState<string | null>(null);
-    // Init Caps Lock to false (SSR-safe), then hydrate from localStorage after mount
     const [isCapsLock, setIsCapsLock] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
     const [isFocused, setIsFocused] = useState(true);
@@ -430,7 +728,6 @@ export default function MonkeyTypePage() {
     const [ghost, setGhost] = useState<{ wpm: number, userName: string | null } | null>(null);
     const [ghostPos, setGhostPos] = useState({ top: 0, left: 0, charIndex: 0 });
 
-    // Hydrate from localStorage after client mount
     useEffect(() => {
         try {
             const stored = localStorage.getItem("capsLockState");
@@ -438,13 +735,11 @@ export default function MonkeyTypePage() {
         } catch { }
     }, []);
 
-    // Persist Caps Lock state and detect it from mouse events on load
     useEffect(() => {
         try { localStorage.setItem("capsLockState", String(isCapsLock)); } catch { }
     }, [isCapsLock]);
 
     useEffect(() => {
-        // Detect Caps Lock from the first pointer interaction (works before any keydown)
         const detectFromPointer = (e: MouseEvent | PointerEvent) => {
             if (e.getModifierState) {
                 setIsCapsLock(e.getModifierState("CapsLock"));
@@ -463,7 +758,6 @@ export default function MonkeyTypePage() {
     useEffect(() => { userInputRef.current = userInput; }, [userInput]);
     useEffect(() => { wordsRefData.current = words; }, [words]);
 
-    // Refs for chart snapshot — avoid stale closures in intervals
     const statsRef = useRef(stats);
     const startTimeRef = useRef<number | null>(null);
     const chartDataRef = useRef<ChartPoint[]>([]);
@@ -479,41 +773,14 @@ export default function MonkeyTypePage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [hasMounted, setHasMounted] = useState(false);
     const wasTabPressedRef = useRef(false);
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
+    useEffect(() => { setHasMounted(true); }, []);
 
-    // Load theme and other persisted settings
     const activeTheme = THEMES[theme] || THEMES.codex;
 
-    // --- Search / Command Palette Logic ---
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
-
-    const playClickSound = useCallback(() => {
-        if (!soundEnabled) return;
-        try {
-            const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-            const audioCtx = new AudioContextClass();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(150 + Math.random() * 50, audioCtx.currentTime);
-
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05);
-
-            setTimeout(() => audioCtx.close(), 100);
-        } catch { }
-    }, [soundEnabled]);
+    const [activeCommandGroup, setActiveCommandGroup] = useState<string | null>(null);
 
     const targetText = useMemo(() => {
         return words.join(" ");
@@ -616,7 +883,9 @@ export default function MonkeyTypePage() {
         let interval: ReturnType<typeof setInterval> | undefined;
         if (isActive && mode === "time" && timeLeft > 0) {
             interval = setInterval(() => {
-                setTimeLeft(useMonkeyTypeStore.getState().timeLeft - 1);
+                const nextTime = useMonkeyTypeStore.getState().timeLeft - 1;
+                setTimeLeft(nextTime);
+                if (nextTime === 10) playWarningSound();
             }, 1000);
         } else if (mode === "time" && timeLeft === 0) {
             finishTestRef.current();
@@ -716,6 +985,13 @@ export default function MonkeyTypePage() {
             }
         }
 
+        // Trigger error sound if precisely this keystroke introduced an error
+        if (value.length > userInput.length) {
+            const lastCharIdx = value.length - 1;
+            const isError = lastCharIdx >= targetText.length || value[lastCharIdx] !== targetText[lastCharIdx];
+            if (isError) playErrorSound();
+        }
+
         if (value.length < targetText.length && mode === "words") {
             // Only relevant for words mode completion
         }
@@ -770,36 +1046,80 @@ export default function MonkeyTypePage() {
         setTimeout(() => inputRef.current?.focus(), 50);
     }, [generateWords, mode, config, language, resetLiveState]);
 
+    interface CommandItem {
+        id: string;
+        label: string;
+        category: string;
+        action: () => void;
+    }
+
     const commands = useMemo(() => {
-        const list: { id: string, label: string, category: string, action: () => void }[] = [];
+        const list: CommandItem[] = [];
 
-        // Modes
-        list.push({ id: "mode-time", label: "Time", category: "Mode", action: () => { setMode("time"); setConfig(30); resetTest(); } });
-        list.push({ id: "mode-words", label: "Words", category: "Mode", action: () => { setMode("words"); setConfig(25); resetTest(); } });
+        if (!activeCommandGroup) {
+            // Main Menu
+            list.push({ id: "action-restart", label: "Restart Test", category: "Action", action: () => resetTest() });
 
-        // Durations/Word Counts
-        if (mode === "time") {
-            [15, 30, 60, 120].forEach(t => list.push({ id: `time-${t}`, label: `${t} Seconds`, category: "Duration", action: () => { setConfig(t as GameConfig); resetTest(); } }));
-        } else {
-            [10, 25, 50, 100].forEach(w => list.push({ id: `words-${w}`, label: `${w} Words`, category: "Amount", action: () => { setConfig(w as GameConfig); resetTest(); } }));
+            // Configuration Groups
+            list.push({ id: "group-sound-click", label: "Sound on Click...", category: "Sound", action: () => { setActiveCommandGroup('sound-click'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-sound-volume", label: "Sound on Volume...", category: "Sound", action: () => { setActiveCommandGroup('sound-volume'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "toggle-sound-error", label: `Sound on Error: ${soundOnError ? 'ON' : 'OFF'}`, category: "Sound", action: () => setSettings({ soundOnError: !soundOnError }) });
+            list.push({ id: "toggle-time-warning", label: `Play Time Warning: ${playTimeWarning ? 'ON' : 'OFF'}`, category: "Sound", action: () => setSettings({ playTimeWarning: !playTimeWarning }) });
+
+            // Core Settings
+            list.push({ id: "mode-time", label: "Time Mode", category: "Mode", action: () => { setMode("time"); setConfig(30); resetTest(); setIsSearchOpen(false); } });
+            list.push({ id: "mode-words", label: "Words Mode", category: "Mode", action: () => { setMode("words"); setConfig(25); resetTest(); setIsSearchOpen(false); } });
+
+            // Languages
+            list.push({ id: "lang-en", label: "English", category: "Language", action: () => { setLanguage("english"); resetTest(); setIsSearchOpen(false); } });
+            list.push({ id: "lang-km", label: "Khmer", category: "Language", action: () => { setLanguage("khmer"); resetTest(); setIsSearchOpen(false); } });
+
+            // Themes
+            Object.entries(THEMES).forEach(([id, t]) => {
+                list.push({ id: `theme-${id}`, label: (t as any).name || id, category: "Theme", action: () => { setTheme(id as Theme); setIsSearchOpen(false); } });
+            });
+        } else if (activeCommandGroup === 'sound-click') {
+            // Click Sounds Sub-menu
+            const soundTypes = [
+                { id: 'mechanical', label: 'Mechanical' },
+                { id: 'cherry_blue', label: 'Cherry MX Blue' },
+                { id: 'cherry_brown', label: 'Cherry MX Brown' },
+                { id: 'cherry_red', label: 'Cherry MX Red' },
+                { id: 'clack', label: 'Clack' },
+                { id: 'tink', label: 'Tink' },
+                { id: 'pop', label: 'Pop' },
+                { id: 'plastic', label: 'Plastic' },
+                { id: 'typewriter', label: 'Typewriter' },
+                { id: 'water', label: 'Water Drop' },
+            ];
+            soundTypes.forEach(s => list.push({
+                id: `sound-${s.id}`,
+                label: s.label,
+                category: "Click Sound",
+                action: () => { setSettings({ soundType: s.id, soundEnabled: true }); setIsSearchOpen(false); setActiveCommandGroup(null); setSearchQuery(""); }
+            }));
+        } else if (activeCommandGroup === 'sound-volume') {
+            // Volume Sub-menu
+            const volumeOptions = [
+                { id: 'vol-quiet', label: 'Quiet (25%)', val: 0.25 },
+                { id: 'vol-medium', label: 'Medium (50%)', val: 0.5 },
+                { id: 'vol-loud', label: 'Loud (100%)', val: 1.0 },
+                { id: 'vol-custom', label: 'Custom Setting...', val: 0.75 },
+            ];
+            volumeOptions.forEach(v => list.push({
+                id: v.id,
+                label: v.label,
+                category: "Volume",
+                action: () => { setSettings({ soundVolume: v.val }); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
         }
 
-        // Languages
-        list.push({ id: "lang-en", label: "English", category: "Language", action: () => { setLanguage("english"); resetTest(); } });
-        list.push({ id: "lang-km", label: "Khmer", category: "Language", action: () => { setLanguage("khmer"); resetTest(); } });
-
-        // Themes
-        (Object.keys(THEMES) as Theme[]).forEach(t => list.push({ id: `theme-${t}`, label: t.charAt(0).toUpperCase() + t.slice(1), category: "Theme", action: () => { setTheme(t); } }));
-
-        // Actions
-        list.push({ id: "action-restart", label: "Restart Test", category: "Action", action: () => resetTest() });
-
         return list;
-    }, [mode, setMode, setConfig, setLanguage, setTheme, resetTest]);
+    }, [activeCommandGroup, soundOnError, playTimeWarning, resetTest, setSettings, setTheme, setMode, setConfig, setLanguage, language]);
 
     const filteredCommands = useMemo(() => {
-        if (!searchQuery.trim()) return [];
         const q = searchQuery.toLowerCase().trim();
+        if (!q) return commands;
         return commands.filter(c => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
     }, [commands, searchQuery]);
 
@@ -815,19 +1135,44 @@ export default function MonkeyTypePage() {
             if (isSearchOpen) {
                 if (e.key === "Escape") {
                     e.preventDefault();
-                    setIsSearchOpen(false);
+                    if (activeCommandGroup) {
+                        setActiveCommandGroup(null);
+                        setSelectedIndex(0);
+                    } else {
+                        setIsSearchOpen(false);
+                    }
                 } else if (e.key === "ArrowDown") {
                     e.preventDefault();
-                    setSelectedIndex(prev => Math.min(prev + 1, filteredCommands.length - 1));
+                    const nextIndex = Math.min(selectedIndex + 1, filteredCommands.length - 1);
+                    if (nextIndex !== selectedIndex) {
+                        setSelectedIndex(nextIndex);
+                        const cmd = filteredCommands[nextIndex];
+                        if (cmd.category === "Sound Click") {
+                            const soundId = cmd.id.replace('sound-', '');
+                            playClickSound(soundId);
+                        } else if (cmd.category === "Volume") {
+                            // Play a test sound at the selected volume
+                            playClickSound();
+                        }
+                    }
                 } else if (e.key === "ArrowUp") {
                     e.preventDefault();
-                    setSelectedIndex(prev => Math.max(prev - 1, 0));
+                    const prevIndex = Math.max(selectedIndex - 1, 0);
+                    if (prevIndex !== selectedIndex) {
+                        setSelectedIndex(prevIndex);
+                        const cmd = filteredCommands[prevIndex];
+                        if (cmd.category === "Sound Click") {
+                            const soundId = cmd.id.replace('sound-', '');
+                            playClickSound(soundId);
+                        } else if (cmd.category === "Volume") {
+                            // Play a test sound at the selected volume
+                            playClickSound();
+                        }
+                    }
                 } else if (e.key === "Enter") {
                     e.preventDefault();
                     if (filteredCommands[selectedIndex]) {
                         filteredCommands[selectedIndex].action();
-                        setIsSearchOpen(false);
-                        setSearchQuery("");
                     }
                 }
                 return;
@@ -849,6 +1194,7 @@ export default function MonkeyTypePage() {
             if (e.key === "Escape" || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "p")) {
                 e.preventDefault();
                 setIsSearchOpen(true);
+                setActiveCommandGroup(null);
                 setSearchQuery("");
                 setSelectedIndex(0);
                 setTimeout(() => searchInputRef.current?.focus(), 50);
@@ -1173,7 +1519,7 @@ export default function MonkeyTypePage() {
                                     filteredCommands.map((cmd, i) => (
                                         <div
                                             key={cmd.id}
-                                            onClick={() => { cmd.action(); setIsSearchOpen(false); setSearchQuery(""); }}
+                                            onClick={() => cmd.action()}
                                             onMouseEnter={() => setSelectedIndex(i)}
                                             className={cn(
                                                 "px-6 py-3 flex items-center justify-between cursor-pointer transition-colors duration-150",

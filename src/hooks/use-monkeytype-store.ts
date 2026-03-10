@@ -82,7 +82,21 @@ interface MonkeyTypeState {
     showLiveAccuracy: boolean;
     fontSize: number;
     fontFamily: string;
-    setSettings: (settings: Partial<{ soundEnabled: boolean, showLiveWpm: boolean, showLiveAccuracy: boolean, fontSize: number, fontFamily: string }>) => void;
+    soundType: string;
+    soundVolume: number;
+    soundOnError: boolean;
+    playTimeWarning: boolean;
+    setSettings: (settings: Partial<{
+        soundEnabled: boolean,
+        showLiveWpm: boolean,
+        showLiveAccuracy: boolean,
+        fontSize: number,
+        fontFamily: string,
+        soundType: string,
+        soundVolume: number,
+        soundOnError: boolean,
+        playTimeWarning: boolean
+    }>) => void;
 
     // History
     history: RunHistory[];
@@ -154,6 +168,10 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
             showLiveAccuracy: true,
             fontSize: 24,
             fontFamily: 'monospace',
+            soundType: 'mechanical',
+            soundVolume: 0.5,
+            soundOnError: true,
+            playTimeWarning: true,
             setSettings: (settings) => set((state) => ({ ...state, ...settings })),
 
             history: [],
@@ -184,6 +202,10 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 showLiveAccuracy: state.showLiveAccuracy,
                 fontSize: state.fontSize,
                 fontFamily: state.fontFamily,
+                soundType: state.soundType,
+                soundVolume: state.soundVolume,
+                soundOnError: state.soundOnError,
+                playTimeWarning: state.playTimeWarning,
                 userLevel: state.userLevel,
             }), // Persist settings and history
         }
