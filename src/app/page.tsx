@@ -1604,21 +1604,23 @@ export default function MonkeyTypePage() {
                                             activeTheme={activeTheme}
                                         />
                                     </div>
-                                    <button
+                                    <motion.button
                                         ref={restartRef}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => resetTest()}
-                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); resetTest(); } }}
-                                        className="p-5 rounded-full transition-all transform hover:rotate-180 duration-500 focus:outline-none"
-                                        style={{
-                                            color: 'var(--mt-text-dim)'
-                                        }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--mt-text)'; e.currentTarget.style.backgroundColor = 'var(--mt-bg-alt)'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--mt-text-dim)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
-                                        onFocus={(e) => { e.currentTarget.style.color = 'var(--mt-primary)'; e.currentTarget.style.backgroundColor = 'var(--mt-bg-alt)'; }}
-                                        onBlur={(e) => { e.currentTarget.style.color = 'var(--mt-text-dim)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                        className="group flex items-center gap-0 hover:gap-3 focus-visible:gap-3 px-4 py-4 rounded-full transition-all duration-300 focus:outline-none cursor-pointer"
+                                        style={{ color: activeTheme.textDim }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.text; e.currentTarget.style.backgroundColor = activeTheme.bgAlt; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                        onFocus={(e) => { e.currentTarget.style.color = activeTheme.text; e.currentTarget.style.backgroundColor = activeTheme.bgAlt; }}
+                                        onBlur={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.backgroundColor = 'transparent'; }}
                                     >
-                                        <RotateCcw className="w-8 h-8" />
-                                    </button>
+                                        <RotateCcw className="w-5 h-5 transition-transform duration-500 group-hover:rotate-180 group-focus-visible:rotate-180" />
+                                        <span className="text-xs font-bold uppercase tracking-widest overflow-hidden whitespace-nowrap w-0 group-hover:w-24 group-focus-visible:w-24 transition-all duration-300 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+                                            restart test
+                                        </span>
+                                    </motion.button>
                                 </div>
                             </div>
                         </div>
@@ -1844,20 +1846,20 @@ export default function MonkeyTypePage() {
 
                             <motion.button
                                 ref={restartRef}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={() => resetTest()}
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); resetTest(); } }}
-                                className="group flex items-center gap-2 px-8 py-3 rounded-[4px] font-bold text-sm tracking-widest uppercase transition-all focus:outline-none"
-                                style={{ backgroundColor: activeTheme.bgAlt, color: activeTheme.textDim }}
-                                onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.text; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.color = activeTheme.textDim; }}
-                                onFocus={(e) => { e.currentTarget.style.color = activeTheme.primary; e.currentTarget.style.outline = `2px solid ${activeTheme.primary}`; }}
-                                onBlur={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.outline = 'none'; }}
+                                className="group flex items-center gap-0 hover:gap-3 focus-visible:gap-3 px-6 py-4 rounded-full transition-all duration-300 focus:outline-none cursor-pointer"
+                                style={{ color: activeTheme.textDim }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.text; e.currentTarget.style.backgroundColor = activeTheme.bgAlt; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                onFocus={(e) => { e.currentTarget.style.color = activeTheme.text; e.currentTarget.style.backgroundColor = activeTheme.bgAlt; }}
+                                onBlur={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.backgroundColor = 'transparent'; }}
                             >
-                                <RotateCcw className="w-3.5 h-3.5 transition-transform group-hover:rotate-45" />
-                                <span className="transition-all duration-200 group-hover:hidden">next test</span>
-                                <span className="hidden group-hover:inline transition-all duration-200">restart test</span>
+                                <RotateCcw className="w-5 h-5 transition-transform duration-500 group-hover:rotate-180 group-focus-visible:rotate-180" />
+                                <span className="text-xs font-bold uppercase tracking-widest overflow-hidden whitespace-nowrap w-0 group-hover:w-24 group-focus-visible:w-24 transition-all duration-300 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+                                    restart test
+                                </span>
                             </motion.button>
                         </div>
                     </motion.div>
