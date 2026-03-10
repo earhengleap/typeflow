@@ -128,14 +128,15 @@ export default function AccountPage() {
         });
     }, [userData]);
 
-    // Simplified Heatmap Data
     const heatmapData = useMemo(() => {
         const days = 14 * 7; // 14 weeks
         const data = Array.from({ length: days }, (_, i) => {
             const date = new Date();
             date.setDate(date.getDate() - (days - 1 - i));
-            const count = history.filter(h => new Date(h.date).toDateString() === date.toDateString()).length;
-            return { date, count };
+            const filteredHistory = history.filter(h => new Date(h.date).toDateString() === date.toDateString());
+            const count = filteredHistory.length;
+            const totalDuration = filteredHistory.reduce((acc, h) => acc + (h.duration || 0), 0);
+            return { date, count, duration: totalDuration };
         });
         return data;
     }, [history]);
@@ -349,8 +350,9 @@ export default function AccountPage() {
                                                     opacity: intensity === 0 ? 0.3 : intensity === 1 ? 0.4 : intensity === 2 ? 0.6 : intensity === 3 ? 0.8 : 1
                                                 }}
                                             >
-                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 rounded-xl bg-[#000] text-white text-[10px] font-bold whitespace-nowrap opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-all scale-95 group-hover/cell:scale-100 z-10 shadow-2xl border border-white/10">
-                                                    {data.count} tests on {data.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 rounded-xl bg-[#000] text-white text-[10px] font-bold whitespace-nowrap opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-all scale-95 group-hover/cell:scale-100 z-10 shadow-2xl border border-white/10 flex flex-col items-center gap-1">
+                                                    <span style={{ color: activeTheme.primary }}>{data.count} tests {data.count > 0 && `• ${data.duration}s typing`}</span>
+                                                    <span className="opacity-40">{data.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                                 </div>
                                             </div>
                                         );

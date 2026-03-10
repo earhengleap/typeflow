@@ -50,11 +50,18 @@ export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { 
             newStreak = 1; // First test
         }
 
-        // Calculate XP Gain: Base 5 + (WPM * Accuracy / 10)
-        const performanceBonus = Math.floor((run.wpm * (run.accuracy / 100)));
-        const xpGain = 5 + performanceBonus;
+        // Monkeytype-style XP Gain: secondsTyped * 2 * modifier * accuracyModifier
+        const secondsTyped = run.duration || 1;
+        const accuracy = run.accuracy;
+        const accuracyModifier = Math.max(0, (accuracy - 50) / 50);
+
+        let multiplier = 1.0;
+        if (accuracy === 100) multiplier += 0.5;
+        if ((run.missedChars || 0) === 0) multiplier += 0.25;
+
+        const xpGain = Math.max(1, Math.floor(secondsTyped * 2 * multiplier * accuracyModifier));
         const newXp = user.xp + xpGain;
-        const newLevel = Math.floor(Math.sqrt(newXp / 50)) + 1; // Level up slower as you go
+        const newLevel = Math.floor(Math.sqrt(newXp / 50)) + 1;
 
         const testsCompleted = user.testsCompleted + 1;
         const totalTypingTime = user.typingTime + run.duration;
@@ -179,6 +186,7 @@ export async function getUserTypingHistory(userId?: string) {
             language: r.language as "english" | "khmer",
             theme: r.theme as Theme,
             consistency: r.consistency || 0,
+            duration: r.duration || 0,
             date: r.createdAt.getTime(),
         }));
 

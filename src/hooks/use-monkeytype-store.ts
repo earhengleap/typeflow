@@ -45,6 +45,7 @@ export interface RunHistory {
     language: Language;
     theme: Theme;
     consistency: number;
+    duration: number;
     date: number;
 }
 

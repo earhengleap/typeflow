@@ -578,6 +578,7 @@ export default function MonkeyTypePage() {
             language,
             theme,
             consistency,
+            duration: durationSeconds,
         });
 
         // Save to Database
