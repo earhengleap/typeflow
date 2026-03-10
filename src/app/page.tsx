@@ -8,7 +8,6 @@ import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint }
 import { THEMES } from "@/constants/themes";
 import { incrementTestsStarted, getGhostRun, saveTypingResult } from "@/app/actions/typing-results";
 import { ACHIEVEMENTS } from "@/constants/achievements";
-import { saveLeaderboardResult } from "@/app/actions/leaderboard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 

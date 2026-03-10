@@ -1,85 +1,10 @@
 "use server";
 
-import { redis } from "@/db/redis";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-
-const getLeaderboardKeys = (type: string, gameMode: string, config: string, language: string) => {
-    let timeSuffix = "";
-    const now = new Date();
-
-    if (type === "daily") {
-        timeSuffix = `_${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
-    } else if (type === "weekly") {
-        // Robust UTC week calculation
-        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-        const diff = now.getTime() - startOfYear.getTime();
-        const oneDay = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(diff / oneDay);
-        const weekNum = Math.ceil((dayOfYear + startOfYear.getUTCDay() + 1) / 7);
-        timeSuffix = `_${now.getUTCFullYear()}_w${weekNum}`;
-    }
-
-    return {
-        wpm: `typing_leaderboard_${language}_${gameMode}_${config}_${type}${timeSuffix}_wpm`,
-        metadata: `typing_leaderboard_${language}_${gameMode}_${config}_${type}${timeSuffix}_metadata`
-    };
-};
-
-export async function saveLeaderboardResult(
-    wpm: number,
-    accuracy: number,
-    rawWpm: number,
-    consistency: number,
-    missedChars: number = 0,
-    type: "allTime" | "weekly" | "daily" = "allTime",
-    gameMode: string = "time",
-    config: string = "15",
-    language: string = "english"
-) {
-    const session = await auth();
-    if (!session?.user) return { error: "You must be signed in to submit results." };
-    if (!process.env.UPSTASH_REDIS_REST_URL) return { error: "Redis not configured." };
-
-    const userId = session.user.id;
-    if (!userId) return { error: "Invalid user session." };
-
-    const userName = session.user.name || "Anonymous";
-    const userImage = session.user.image || "";
-    const userLevel = (session.user as { level?: number }).level || 1;
-
-    const { wpm: wpmKey, metadata: metaKey } = getLeaderboardKeys(type, gameMode, config, language);
-
-    try {
-        // Only update if it's the user's best WPM for this category/mode/language
-        const currentBest = await redis.zscore(wpmKey, userId);
-
-        if (!currentBest || wpm > Number(currentBest)) {
-            await redis.zadd(wpmKey, { score: wpm, member: userId });
-
-            const metadata = {
-                userId,
-                name: userName,
-                image: userImage,
-                level: userLevel,
-                wpm,
-                accuracy,
-                rawWpm,
-                consistency,
-                missedChars,
-                date: new Date().toISOString()
-            };
-
-            await redis.hset(metaKey, { [userId]: JSON.stringify(metadata) });
-        }
-
-        revalidatePath("/leaderboards");
-        return { success: true };
-    } catch (error) {
-        console.error("Redis Error:", error);
-        return { error: "Failed to update leaderboard." };
-    }
-}
+import { db } from "@/db";
+import { typingResults, users } from "@/db/schema";
+import { desc, eq, and, sql, gte } from "drizzle-orm";
 
 export async function getTopLeaderboard(
     limit = 50,
@@ -88,42 +13,77 @@ export async function getTopLeaderboard(
     config: string = "15",
     language: string = "english"
 ) {
-    const { wpm: wpmKey, metadata: metaKey } = getLeaderboardKeys(type, gameMode, config, language);
-
     try {
-        const userIds = await redis.zrange(wpmKey, 0, limit - 1, {
-            rev: true,
-        }) as string[];
+        const now = new Date();
+        let dateFilter = undefined;
 
-        if (!userIds || userIds.length === 0) {
-            return [];
+        if (type === "daily") {
+            const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            dateFilter = gte(typingResults.createdAt, startOfDay);
+        } else if (type === "weekly") {
+            const startOfWeek = new Date(now);
+            const day = now.getUTCDay();
+            const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1); // Adjust to start of week (Monday)
+            startOfWeek.setUTCDate(diff);
+            startOfWeek.setUTCHours(0, 0, 0, 0);
+            dateFilter = gte(typingResults.createdAt, startOfWeek);
         }
 
-        // Fetch metadata for all these users
-        const metadataList = await redis.hmget(metaKey, ...userIds);
+        const conditions = [
+            eq(typingResults.mode, gameMode),
+            eq(typingResults.config, Number(config)),
+            eq(typingResults.language, language),
+        ];
 
-        if (!metadataList) return [];
+        if (dateFilter) {
+            conditions.push(dateFilter);
+        }
 
-        // Robust handling of metadataList - handle both array and object responses
-        const results = Array.isArray(metadataList)
-            ? metadataList
-            : Object.values(metadataList as Record<string, unknown>);
-
-        const finalResults = results
-            .filter((m): m is string | object => !!m)
-            .map(m => {
-                if (typeof m === 'object') return m;
-                try {
-                    return JSON.parse(m);
-                } catch (e) {
-                    return null;
-                }
+        // Subquery to get rank #1 per user based on WPM
+        const sq = db
+            .select({
+                userId: typingResults.userId,
+                wpm: typingResults.wpm,
+                accuracy: typingResults.accuracy,
+                rawWpm: typingResults.rawWpm,
+                consistency: typingResults.consistency,
+                missedChars: typingResults.missedChars,
+                createdAt: typingResults.createdAt,
+                rn: sql<number>`row_number() over (partition by ${typingResults.userId} order by ${typingResults.wpm} desc, ${typingResults.createdAt} desc)`.as("rn"),
             })
-            .filter(item => item !== null);
+            .from(typingResults)
+            .where(and(...conditions))
+            .as("sq");
 
-        return finalResults;
+        const results = await db
+            .select({
+                userId: sq.userId,
+                name: users.name,
+                image: users.image,
+                level: users.level,
+                wpm: sq.wpm,
+                accuracy: sq.accuracy,
+                rawWpm: sq.rawWpm,
+                consistency: sq.consistency,
+                missedChars: sq.missedChars,
+                date: sq.createdAt,
+            })
+            .from(sq)
+            .innerJoin(users, eq(sq.userId, users.id))
+            .where(eq(sq.rn, 1))
+            .orderBy(desc(sq.wpm))
+            .limit(limit);
+
+        return results.map(r => ({
+            ...r,
+            wpm: Number(r.wpm),
+            accuracy: Number(r.accuracy),
+            rawWpm: Number(r.rawWpm),
+            consistency: r.consistency ? Number(r.consistency) : null,
+            date: r.date.toISOString(),
+        }));
     } catch (error) {
-        console.error("Redis Fetch Error:", error);
+        console.error("Database Leaderboard Error:", error);
         return [];
     }
 }

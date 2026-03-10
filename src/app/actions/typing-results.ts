@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { typingResults, users, userAchievements } from "@/db/schema";
 import { desc, eq, sql, and } from "drizzle-orm";
 import type { RunHistory, Theme } from "@/hooks/use-monkeytype-store";
-import { saveLeaderboardResult } from "./leaderboard";
+import { revalidatePath } from "next/cache";
 
 export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { duration: number; consistency: number; missedChars?: number }) {
     const session = await auth();
@@ -115,26 +115,8 @@ export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { 
             })
             .where(eq(users.id, session.user.id));
 
-        // 5. Update Leaderboards (All-time, Weekly, Daily)
-        const leaderboardData = {
-            wpm: run.wpm,
-            accuracy: run.accuracy,
-            rawWpm: run.rawWpm,
-            consistency: run.consistency,
-            missedChars: run.missedChars || 0,
-            gameMode: run.mode,
-            config: String(run.config),
-            language: run.language
-        };
-
-        console.log(`[saveTypingResult] About to sync to leaderboards with data:`, leaderboardData);
-        // We use Promise.all to update all three leaderboards efficiently
-        const lbResults = await Promise.all([
-            saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "allTime", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
-            saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "weekly", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
-            saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "daily", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
-        ]);
-        console.log(`[saveTypingResult] Leaderboard sync results:`, lbResults);
+        // 5. Revalidate leaderboard cache
+        revalidatePath("/leaderboards");
 
         return {
             success: true,
