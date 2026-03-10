@@ -166,9 +166,17 @@ export function Leaderboard({
         >
             {/* Header/Title */}
             <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: theme.text }}>
-                    {activeTab === 'allTime' ? 'All-time' : activeTab === 'weekly' ? 'Weekly' : 'Daily'} {activeLanguage === 'english' ? 'English' : 'Khmer'} {activeMode} {activeConfig} Leaderboard
-                </h1>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: theme.text }}>
+                        {activeTab === 'allTime' ? 'All-time' : activeTab === 'weekly' ? 'Weekly' : 'Daily'} {activeLanguage === 'english' ? 'English' : 'Khmer'} {activeMode} {activeConfig} Leaderboard
+                    </h1>
+                    {timeLeft && (
+                        <div className="flex items-center gap-2 text-xs uppercase font-bold tracking-[0.1em] opacity-50" style={{ color: theme.textDim }}>
+                            <span>Next update in</span>
+                            <span className="font-mono text-sm" style={{ color: theme.primary }}>{timeLeft}</span>
+                        </div>
+                    )}
+                </div>
                 {isModal && onClose && (
                     <button
                         onClick={onClose}
@@ -419,16 +427,10 @@ export function Leaderboard({
                             </motion.tbody>
                         </table>
                     </div>
-                    <div className="px-8 py-4 bg-white/5 flex items-center justify-between">
+                    <div className="px-8 py-4 bg-white/5 flex items-center justify-center">
                         <span className="text-[10px] uppercase font-black tracking-[0.2em] opacity-20">
                             Real-time rankings powered by Upstash Redis
                         </span>
-                        {timeLeft && (
-                            <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-[0.1em] opacity-40" style={{ color: theme.textDim }}>
-                                <span>Next update in</span>
-                                <span className="font-mono text-xs" style={{ color: theme.primary }}>{timeLeft}</span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
