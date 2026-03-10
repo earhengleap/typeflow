@@ -1098,8 +1098,8 @@ export default function MonkeyTypePage() {
     return (
         <div
             className={cn(
-                "min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-start select-none theme-transition",
-                "pt-1 sm:pt-1.5 md:pt-3 px-[var(--content-px)]",
+                "h-screen h-[100dvh] w-full flex flex-col items-center justify-between overflow-hidden select-none theme-transition",
+                "pt-1 sm:pt-1.5 md:pt-3 px-[var(--content-px)] pb-1 sm:pb-2 md:pb-4",
                 language === "khmer" ? "font-sans font-medium" : "font-mono"
             )}
             onClick={() => {
@@ -1273,7 +1273,7 @@ export default function MonkeyTypePage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="w-full max-w-[var(--content-max-w)] flex flex-col gap-4 sm:gap-6 md:gap-10 lg:gap-12"
+                        className="w-full max-w-[var(--content-max-w)] flex-1 flex flex-col justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8 min-h-0"
                     >
                         {/* Mode Selector Config Bar */}
                         <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 p-1 sm:p-1.5 rounded-xl self-center text-[10px] sm:text-xs font-bold shadow-2xl theme-transition" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>
@@ -1312,9 +1312,9 @@ export default function MonkeyTypePage() {
                             </div>
                         </div>
 
-                        <div className="relative w-full flex flex-col gap-4 sm:gap-6 md:gap-10 lg:gap-12">
+                        <div className="relative w-full flex flex-col gap-2 sm:gap-4 md:gap-6 lg:gap-8">
                             {/* Inner Container (No longer blurred here) */}
-                            <div className="w-full flex flex-col gap-4 sm:gap-6 md:gap-10 lg:gap-12 transition-all">
+                            <div className="w-full flex flex-col gap-2 sm:gap-4 md:gap-6 lg:gap-8 transition-all">
                                 {/* Caps Lock Warning — 1:1 Monkeytype Style */}
                                 <AnimatePresence>
                                     {isCapsLock && (
@@ -1627,8 +1627,7 @@ export default function MonkeyTypePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.35, ease: "easeOut" }}
-                        className="w-full max-w-[var(--content-max-w)] flex flex-col py-4 sm:py-6 gap-0 justify-between"
-                        style={{ minHeight: 'calc(100dvh - 80px)' } as React.CSSProperties}
+                        className="w-full max-w-[var(--content-max-w)] flex-1 flex flex-col py-4 sm:py-6 gap-0 justify-center min-h-0"
                     >
                         {/* Main 2-Column Layout */}
                         <div className="flex flex-col md:flex-row w-full gap-4 md:gap-8 flex-1 min-h-0">
