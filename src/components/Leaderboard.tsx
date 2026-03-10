@@ -106,7 +106,6 @@ export function Leaderboard({
         return () => clearInterval(timer);
     }, [initialType, searchParams]);
 
-    // Sync state with initial props or URL
     const activeTab = (searchParams.get("type") as "allTime" | "weekly" | "daily") || initialType;
     const activeMode = (searchParams.get("mode") as "time" | "words") || initialMode;
     const activeConfig = searchParams.get("config") || initialConfig;
@@ -327,7 +326,7 @@ export function Leaderboard({
                                 {loading ? (
                                     Array(10).fill(0).map((_, i) => (
                                         <tr key={i} className="animate-pulse">
-                                            <td colSpan={6} className="h-12 bg-white/5 rounded-xl border-y-[6px] border-transparent" />
+                                            <td colSpan={8} className="h-12 bg-white/5 rounded-xl border-y-[6px] border-transparent" />
                                         </tr>
                                     ))
                                 ) : entries.length > 0 ? (
@@ -347,13 +346,13 @@ export function Leaderboard({
                                                     isMe ? "bg-white/[0.03]" : "hover:bg-white/5"
                                                 )}
                                             >
-                                                {isMe && (
-                                                    <div
-                                                        className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full"
-                                                        style={{ backgroundColor: theme.primary }}
-                                                    />
-                                                )}
-                                                <td className="px-4 py-3 text-center rounded-l-2xl">
+                                                <td className="px-4 py-3 text-center rounded-l-2xl relative">
+                                                    {isMe && (
+                                                        <div
+                                                            className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full"
+                                                            style={{ backgroundColor: theme.primary }}
+                                                        />
+                                                    )}
                                                     {index === 0 ? (
                                                         <div className="flex justify-center">
                                                             <Trophy className="w-5 h-5" style={{ color: '#e2b714' }} />
@@ -387,12 +386,12 @@ export function Leaderboard({
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <span className="text-lg font-black italic tracking-tighter" style={{ color: index < 3 ? theme.primary : theme.text }}>
-                                                        {entry.wpm.toFixed(1)}
+                                                        {(entry.wpm ?? 0).toFixed(1)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <span className="font-bold tabular-nums">
-                                                        {entry.accuracy.toFixed(0)}%
+                                                        {(entry.accuracy ?? 0).toFixed(0)}%
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
@@ -406,7 +405,7 @@ export function Leaderboard({
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right md:table-cell hidden">
-                                                    <span className="opacity-50 tabular-nums">{entry.rawWpm.toFixed(2)}</span>
+                                                    <span className="opacity-50 tabular-nums">{(entry.rawWpm ?? 0).toFixed(2)}</span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right rounded-r-2xl md:table-cell hidden">
                                                     <div className="flex flex-col leading-tight">
@@ -419,7 +418,7 @@ export function Leaderboard({
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="py-20 text-center opacity-30 italic">
+                                        <td colSpan={8} className="py-20 text-center opacity-30 italic">
                                             No results yet. Be the first to join the leaderboard!
                                         </td>
                                     </tr>

@@ -2,6 +2,7 @@
 
 import { redis } from "@/db/redis";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 const getLeaderboardKeys = (type: string, gameMode: string, config: string, language: string) => {
     let timeSuffix = "";
@@ -10,10 +11,12 @@ const getLeaderboardKeys = (type: string, gameMode: string, config: string, lang
     if (type === "daily") {
         timeSuffix = `_${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
     } else if (type === "weekly") {
-        // Simple ISO week-like suffix
-        const startOfYear = new Date(now.getUTCFullYear(), 0, 1);
-        const pastDaysOfYear = (now.getTime() - startOfYear.getTime()) / 86400000;
-        const weekNum = Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+        // Robust UTC week calculation
+        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+        const diff = now.getTime() - startOfYear.getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+        const weekNum = Math.ceil((dayOfYear + startOfYear.getUTCDay() + 1) / 7);
         timeSuffix = `_${now.getUTCFullYear()}_w${weekNum}`;
     }
 
@@ -70,6 +73,7 @@ export async function saveLeaderboardResult(
             await redis.hset(metaKey, { [userId]: JSON.stringify(metadata) });
         }
 
+        revalidatePath("/leaderboards");
         return { success: true };
     } catch (error) {
         console.error("Redis Error:", error);
@@ -84,8 +88,6 @@ export async function getTopLeaderboard(
     config: string = "15",
     language: string = "english"
 ) {
-    if (!process.env.UPSTASH_REDIS_REST_URL) return [];
-
     const { wpm: wpmKey, metadata: metaKey } = getLeaderboardKeys(type, gameMode, config, language);
 
     try {
@@ -93,7 +95,9 @@ export async function getTopLeaderboard(
             rev: true,
         }) as string[];
 
-        if (!userIds || userIds.length === 0) return [];
+        if (!userIds || userIds.length === 0) {
+            return [];
+        }
 
         // Fetch metadata for all these users
         const metadataList = await redis.hmget(metaKey, ...userIds);
@@ -103,19 +107,21 @@ export async function getTopLeaderboard(
         // Robust handling of metadataList - handle both array and object responses
         const results = Array.isArray(metadataList)
             ? metadataList
-            : Object.values(metadataList as Record<string, string | null>);
+            : Object.values(metadataList as Record<string, unknown>);
 
-        return results
-            .filter((m): m is string => !!m && typeof m === 'string')
+        const finalResults = results
+            .filter((m): m is string | object => !!m)
             .map(m => {
+                if (typeof m === 'object') return m;
                 try {
                     return JSON.parse(m);
                 } catch (e) {
-                    console.error("JSON Parse Error:", e, m);
                     return null;
                 }
             })
             .filter(item => item !== null);
+
+        return finalResults;
     } catch (error) {
         console.error("Redis Fetch Error:", error);
         return [];

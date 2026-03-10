@@ -581,7 +581,7 @@ export default function MonkeyTypePage() {
             duration: durationSeconds,
         });
 
-        // Save to Database
+        // Save to Database (Which also handles Leaderboard sync)
         saveTypingResult({
             wpm: stats.wpm,
             rawWpm: stats.rawWpm,
@@ -602,16 +602,12 @@ export default function MonkeyTypePage() {
                 });
             }
         });
-
-        // Save to Global Leaderboard (Redis)
-        if (stats.wpm > 0) {
-            const currentMode = config.toString();
-            // Save to all-time, weekly, and daily categories with the current language
-            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, consistency, stats.missedChars, "allTime", mode, currentMode, language);
-            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, consistency, stats.missedChars, "weekly", mode, currentMode, language);
-            saveLeaderboardResult(stats.wpm, stats.accuracy, stats.rawWpm, consistency, stats.missedChars, "daily", mode, currentMode, language);
-        }
     }, [addHistory, config, language, mode, startTime, stats, theme, setIsActive, setIsFinished, setGhost, setXpResult]);
+
+    const finishTestRef = useRef(finishTest);
+    useEffect(() => {
+        finishTestRef.current = finishTest;
+    }, [finishTest]);
 
     useEffect(() => {
         generateWords();
@@ -621,13 +617,13 @@ export default function MonkeyTypePage() {
         let interval: ReturnType<typeof setInterval> | undefined;
         if (isActive && mode === "time" && timeLeft > 0) {
             interval = setInterval(() => {
-                setTimeLeft(timeLeft - 1);
+                setTimeLeft(useMonkeyTypeStore.getState().timeLeft - 1);
             }, 1000);
         } else if (mode === "time" && timeLeft === 0) {
-            finishTest();
+            finishTestRef.current();
         }
         return () => clearInterval(interval);
-    }, [isActive, timeLeft, mode, finishTest, setTimeLeft]);
+    }, [isActive, timeLeft === 0, mode, setTimeLeft]);
 
     // Snapshot logic for the chart — runs once on mount/isActive change,
     // reads live values via refs to avoid stale closures

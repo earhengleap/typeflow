@@ -127,12 +127,14 @@ export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { 
             language: run.language
         };
 
+        console.log(`[saveTypingResult] About to sync to leaderboards with data:`, leaderboardData);
         // We use Promise.all to update all three leaderboards efficiently
-        await Promise.all([
+        const lbResults = await Promise.all([
             saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "allTime", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
             saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "weekly", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
             saveLeaderboardResult(leaderboardData.wpm, leaderboardData.accuracy, leaderboardData.rawWpm, leaderboardData.consistency, leaderboardData.missedChars, "daily", leaderboardData.gameMode, leaderboardData.config, leaderboardData.language),
         ]);
+        console.log(`[saveTypingResult] Leaderboard sync results:`, lbResults);
 
         return {
             success: true,
