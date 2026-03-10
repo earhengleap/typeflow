@@ -16,6 +16,8 @@ export function UserMenu() {
     const activeTheme = THEMES[theme] || THEMES.codex;
     const [isOpen, setIsOpen] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const userLevel = useMonkeyTypeStore((state) => state.userLevel);
+    const setUserLevel = useMonkeyTypeStore((state) => state.setUserLevel);
 
     // Sync cloud history on login
     useEffect(() => {
@@ -23,10 +25,22 @@ export function UserMenu() {
             getUserTypingHistory(session.user.id).then((res) => {
                 if (res.success && res.data) {
                     useMonkeyTypeStore.setState({ history: res.data });
+                    if (res.user?.level) {
+                        setUserLevel(res.user.level);
+                    }
                 }
             });
         }
     }, [status, session?.user?.id]);
+
+    // Also sync level from session if available
+    useEffect(() => {
+        // @ts-ignore
+        if (session?.user?.level && session.user.level !== userLevel) {
+            // @ts-ignore
+            setUserLevel(session.user.level);
+        }
+    }, [session?.user]);
 
     const handleMouseEnter = () => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -91,7 +105,12 @@ export function UserMenu() {
                         <User size={18} />
                     </div>
                 )}
-                <span className="text-sm font-bold tracking-tight">{session?.user?.name}</span>
+                <div className="flex flex-col items-start leading-tight">
+                    <span className="text-sm font-bold tracking-tight">{session?.user?.name}</span>
+                    <span className="text-[10px] opacity-50 font-black tracking-widest uppercase" style={{ color: activeTheme.primary }}>
+                        Lvl {userLevel}
+                    </span>
+                </div>
             </button>
 
             <AnimatePresence>

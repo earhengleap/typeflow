@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Type, Trophy, Settings } from "lucide-react";
+import { Type, Crown, Settings } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { SettingsModal } from "@/components/SettingsModal";
 import { useState } from "react";
@@ -38,7 +38,7 @@ export function Header({ activeTheme }: HeaderProps) {
                                 type="button"
                                 style={{ color: activeTheme.textDim }}
                             >
-                                <Trophy className="w-6 h-6 group-hover:scale-110 transition-transform" style={{ color: activeTheme.text }} />
+                                <Crown className="w-6 h-6 group-hover:scale-110 transition-transform" style={{ color: activeTheme.text }} />
                             </motion.button>
                         </Link>
                         <motion.button

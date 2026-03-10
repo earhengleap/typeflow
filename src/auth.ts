@@ -19,15 +19,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id;
+                // @ts-ignore
+                token.level = user.level as number;
             }
-            if (trigger === "update" && session?.name) {
-                token.name = session.name;
+            if (trigger === "update" && session?.level) {
+                token.level = session.level;
             }
             return token;
         },
         async session({ session, token }) {
             if (token.id && session.user) {
                 session.user.id = token.id as string;
+                // @ts-ignore
+                session.user.level = token.level as number;
             }
             return session;
         },

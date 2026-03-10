@@ -88,6 +88,10 @@ interface MonkeyTypeState {
     history: RunHistory[];
     addHistory: (run: Omit<RunHistory, "id" | "date">) => void;
     clearHistory: () => void;
+
+    // User Data
+    userLevel: number;
+    setUserLevel: (level: number) => void;
 }
 
 export const useMonkeyTypeStore = create<MonkeyTypeState>()(
@@ -163,6 +167,9 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 return { history: [newRun, ...state.history].slice(0, 50) };
             }),
             clearHistory: () => set({ history: [] }),
+
+            userLevel: 1,
+            setUserLevel: (userLevel) => set({ userLevel }),
         }),
         {
             name: 'monkeytype-storage',
@@ -177,6 +184,7 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 showLiveAccuracy: state.showLiveAccuracy,
                 fontSize: state.fontSize,
                 fontFamily: state.fontFamily,
+                userLevel: state.userLevel,
             }), // Persist settings and history
         }
     )
