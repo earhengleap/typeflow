@@ -19,7 +19,6 @@ interface User {
 
 export default function AdminNotificationsPage() {
     const { data: session, status } = useSession();
-    const router = useRouter();
     const themeName = useMonkeyTypeStore((state) => state.theme);
     const activeTheme = THEMES[themeName] || THEMES.codex;
 
@@ -36,16 +35,10 @@ export default function AdminNotificationsPage() {
     const [targetUserId, setTargetUserId] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
 
-    // @ts-ignore
-    const isAdmin = session?.user?.role === "admin";
-
     useEffect(() => {
         setMounted(true);
-        if (status === "unauthenticated") {
-            router.push("/");
-        }
         
-        if (status === "authenticated" && isAdmin) {
+        if (status === "authenticated") {
             const loadInitialData = async () => {
                 const [users, history] = await Promise.all([getUsers(), getSentNotifications()]);
                 setUsersList(users);
@@ -54,8 +47,15 @@ export default function AdminNotificationsPage() {
             };
             loadInitialData();
         }
-    }, [status, isAdmin, router]);
+    }, [status]);
 
+    if (!mounted || status === "loading") {
+        return (
+            <div className="min-h-screen flex items-center justify-center font-mono" style={{ backgroundColor: activeTheme.bg }}>
+                <Loader2 className="w-8 h-8 animate-spin opacity-20" style={{ color: activeTheme.text }} />
+            </div>
+        );
+    }
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !message) return;
