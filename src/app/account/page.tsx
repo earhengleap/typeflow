@@ -405,17 +405,17 @@ export default function AccountPage() {
                     <div className="p-6 rounded-[2rem] border overflow-hidden theme-transition flex flex-col gap-4" style={{ backgroundColor: activeTheme.bgAlt + "15", borderColor: activeTheme.bgAlt }}>
                         <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide pb-2 pt-6">
                             {/* Day Labels */}
-                            <div className="flex flex-col gap-2 pt-[1px] shrink-0">
+                            <div className="flex flex-col gap-1.5 pt-[1px] shrink-0">
                                 {["", "Mon", "", "Wed", "", "Fri", ""].map((day, i) => (
-                                    <div key={i} className="h-4 flex items-center text-[9px] font-bold uppercase text-right w-6 opacity-30" style={{ color: activeTheme.textDim }}>
+                                    <div key={i} className="h-[14px] flex items-center text-[9px] font-bold uppercase text-right w-6 opacity-30" style={{ color: activeTheme.textDim }}>
                                         {day}
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="flex gap-2 min-w-max flex-1">
+                            <div className="flex gap-1.5 min-w-max flex-1">
                                 {Array.from({ length: Math.ceil(heatmapData.length / 7) }).map((_, weekIdx) => (
-                                    <div key={weekIdx} className="flex flex-col gap-2 relative">
+                                    <div key={weekIdx} className="flex flex-col gap-1.5 relative">
                                         {/* Dynamic Month label */}
                                         {(() => {
                                             const currentWeekDate = heatmapData[weekIdx * 7].date;
@@ -438,7 +438,7 @@ export default function AccountPage() {
                                             return (
                                                 <div
                                                     key={dayIdx}
-                                                    className="w-4 h-4 rounded-sm transition-all hover:scale-125 cursor-help relative group/cell"
+                                                    className="w-[14px] h-[14px] rounded-sm transition-all hover:scale-125 cursor-help relative group/cell"
                                                     style={{
                                                         backgroundColor: intensity === 0 ? activeTheme.bgAlt : activeTheme.primary,
                                                         opacity: intensity === 0 ? 0.3 : intensity === 1 ? 0.4 : intensity === 2 ? 0.6 : intensity === 3 ? 0.8 : 1
