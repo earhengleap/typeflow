@@ -24,7 +24,7 @@
 
     /* Responsive content sizing */
     --content-max-w: 1650px;
-    --content-px: 1.5rem;
+    --content-px: 180px;
     --typing-font-size: clamp(1.25rem, 2.5vw, 1.75rem);
     --typing-line-height: clamp(2.25rem, 4vw, 3rem);
     --khmer-font-size: clamp(1.5rem, 3vw, 2.1rem);

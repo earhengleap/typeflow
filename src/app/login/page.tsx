@@ -172,7 +172,7 @@ export default function LoginPage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-32 items-start"
+                    className="w-full px-4 md:px-[180px] grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-32 items-start"
                 >
                     {/* Register Column */}
                     <motion.div variants={itemVariants} className="flex flex-col gap-8">

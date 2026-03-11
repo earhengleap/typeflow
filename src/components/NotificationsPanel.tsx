@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, BellOff, Info, Mail, Megaphone, Trash2, CheckCircle2 } from "lucide-react";
 import { THEMES } from "@/constants/themes";
+import { APP_VERSION } from "@/constants/config";
 import { getNotifications, markNotificationAsRead, markAllAsRead, seedInitialNotifications } from "@/app/actions/notifications";
 
 interface NotificationItem {
@@ -185,7 +186,7 @@ export function NotificationsPanel({ isOpen, onClose, activeTheme }: Notificatio
                         {/* Footer / Info */}
                         <div className="p-6 border-t text-center flex items-center justify-between" style={{ borderColor: `${activeTheme.textDim}10` }}>
                             <p className="text-[10px] uppercase tracking-widest font-bold opacity-30">
-                                typeflow v1.0.1
+                                typeflow v{APP_VERSION}
                             </p>
                             <button 
                                 onClick={() => handleMarkAllAsRead()}

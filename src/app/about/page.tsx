@@ -37,7 +37,7 @@ export default function AboutPage() {
         >
             <Header activeTheme={activeTheme} />
 
-            <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col py-8 overflow-y-auto overflow-x-hidden">
+            <main className="flex-1 w-full px-4 md:px-[180px] mx-auto flex flex-col py-8 overflow-y-auto overflow-x-hidden">
                 <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}

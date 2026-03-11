@@ -18,6 +18,9 @@ export async function getUsersList() {
             email: users.email,
             role: users.role,
             joinedAt: users.joinedAt,
+            level: users.level,
+            xp: users.xp,
+            testsCompleted: users.testsCompleted,
         }).from(users);
         
         return { success: true, data };
@@ -61,5 +64,37 @@ export async function updateUserRole(userId: string, newRole: "user" | "admin" |
     } catch (e: any) {
         console.error("Error updating user role:", e);
         return { success: false, error: e.message || "Failed to update role" };
+    }
+}
+
+export async function deleteUser(userId: string) {
+    try {
+        const session = await auth();
+        if (session?.user?.role !== "superadmin") {
+            throw new Error("Unauthorized");
+        }
+
+        const [targetUser] = await db.select().from(users).where(eq(users.id, userId));
+        if (!targetUser) {
+             return { success: false, error: "User not found" };
+        }
+        
+        // Safety lock: Cannot delete system-defined super admins
+        if (targetUser.email) {
+            const superAdmins = (process.env.SUPER_ADMIN_EMAILS || "")
+                .split(",")
+                .map(email => email.trim().toLowerCase());
+                
+            if (superAdmins.includes(targetUser.email.toLowerCase())) {
+                return { success: false, error: "Cannot delete a system-defined Super Admin" };
+            }
+        }
+
+        await db.delete(users).where(eq(users.id, userId));
+            
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error deleting user:", e);
+        return { success: false, error: e.message || "Failed to delete user" };
     }
 }

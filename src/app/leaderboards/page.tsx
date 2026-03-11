@@ -29,7 +29,7 @@ function LeaderboardPageContent() {
         >
             <Header activeTheme={activeTheme} />
 
-            <div className="w-full max-w-5xl px-4 md:px-0">
+            <div className="w-full px-4 md:px-[180px]">
                 <Leaderboard
                     theme={activeTheme}
                     isModal={false}

@@ -4,7 +4,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Type, Crown, Settings, Keyboard as KeyboardIcon, Info, Bell } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
-import { SettingsModal } from "@/components/SettingsModal";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -16,7 +15,6 @@ interface HeaderProps {
 }
 
 export function Header({ activeTheme }: HeaderProps) {
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [hasUnread, setHasUnread] = useState(false);
 
@@ -35,7 +33,7 @@ export function Header({ activeTheme }: HeaderProps) {
 
     return (
         <>
-            <header className="relative w-full max-w-5xl mx-auto flex items-center pt-4 pb-2 z-10 px-4 md:px-0 mb-4 h-16 md:h-20">
+        <header className="relative w-full flex items-center pt-4 pb-2 z-50 px-4 md:px-[180px] mb-4 h-16 md:h-20">
                 <div className="flex w-full items-center justify-between">
                     {/* Left Group: Logo + Navigation Icons */}
                     <div className="flex items-center gap-4 sm:gap-6">
@@ -87,17 +85,18 @@ export function Header({ activeTheme }: HeaderProps) {
                                 </motion.button>
                             </Link>
 
-                            <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-                                type="button"
-                                title="Settings"
-                                style={{ color: activeTheme.textDim }}
-                                onClick={() => setIsSettingsOpen(true)}
-                            >
-                                <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
-                            </motion.button>
+                            <Link href="/settings">
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
+                                    type="button"
+                                    title="Settings"
+                                    style={{ color: activeTheme.textDim }}
+                                >
+                                    <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
+                                </motion.button>
+                            </Link>
                         </div>
                     </div>
 
@@ -127,7 +126,6 @@ export function Header({ activeTheme }: HeaderProps) {
                         <UserMenu />
                     </div>
                 </div>
-                <SettingsModal isOpen={isSettingsOpen} onCloseAction={() => setIsSettingsOpen(false)} />
                 <NotificationsPanel 
                     isOpen={isNotificationsOpen} 
                     onClose={() => {

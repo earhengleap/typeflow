@@ -26,6 +26,7 @@ export interface ChartPoint {
 }
 
 export interface ThemeColors {
+    name?: string;
     bg: string;
     bgAlt: string;
     text: string;
@@ -88,10 +89,21 @@ interface MonkeyTypeState {
     soundVolume: number;
     soundOnError: boolean | string;
     playTimeWarning: boolean | string | number;
+    showLiveTimer: boolean;
+    setShowLiveWpm: (v: boolean) => void;
+    setShowLiveAccuracy: (v: boolean) => void;
+    setShowLiveTimer: (v: boolean) => void;
+    setSoundEnabled: (v: boolean) => void;
+    setFontSize: (v: number) => void;
+    setFontFamily: (v: string) => void;
+    setSoundType: (v: string) => void;
+    setSoundVolume: (v: number) => void;
+
     setSettings: (settings: Partial<{
         soundEnabled: boolean,
         showLiveWpm: boolean,
         showLiveAccuracy: boolean,
+        showLiveTimer: boolean,
         fontSize: number,
         fontFamily: string,
         soundType: string,
@@ -184,12 +196,23 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
             soundEnabled: true,
             showLiveWpm: true,
             showLiveAccuracy: true,
+            showLiveTimer: true,
             fontSize: 24,
             fontFamily: 'monospace',
             soundType: 'mechanical',
             soundVolume: 0.5,
             soundOnError: 'off',
             playTimeWarning: 10,
+            
+            setShowLiveWpm: (v) => set({ showLiveWpm: v }),
+            setShowLiveAccuracy: (v) => set({ showLiveAccuracy: v }),
+            setShowLiveTimer: (v) => set({ showLiveTimer: v }),
+            setSoundEnabled: (v) => set({ soundEnabled: v }),
+            setFontSize: (v) => set({ fontSize: v }),
+            setFontFamily: (v) => set({ fontFamily: v }),
+            setSoundType: (v) => set({ soundType: v }),
+            setSoundVolume: (v) => set({ soundVolume: v }),
+
             setSettings: (settings) => set((state) => ({ ...state, ...settings })),
 
             history: [],
@@ -228,6 +251,7 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 soundEnabled: state.soundEnabled,
                 showLiveWpm: state.showLiveWpm,
                 showLiveAccuracy: state.showLiveAccuracy,
+                showLiveTimer: state.showLiveTimer,
                 fontSize: state.fontSize,
                 fontFamily: state.fontFamily,
                 soundType: state.soundType,

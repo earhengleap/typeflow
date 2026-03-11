@@ -147,7 +147,7 @@ export function UserMenu() {
                             </Link>
 
                             <Link
-                                href="/settings"
+                                href="/account-settings"
                                 className="w-full text-left px-4 py-2 text-sm flex items-center gap-3 transition-colors group"
                                 style={{ color: activeTheme.textDim }}
                                 onMouseEnter={(e) => {
@@ -160,9 +160,9 @@ export function UserMenu() {
                                 }}
                             >
                                 <Settings size={18} className="group-hover:opacity-100" />
-                                <span className="font-medium">Settings</span>
+                                <span className="font-medium">Account Settings</span>
                             </Link>
-
+                            
                             <div className="h-px my-1" style={{ backgroundColor: activeTheme.bgAlt }} />
 
                             <button

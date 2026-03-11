@@ -31,7 +31,7 @@ export default async function AdminLayout({
     return (
         <div className="min-h-screen flex flex-col font-mono bg-black text-white">
             <header className="border-b border-white/10 p-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="w-full px-4 md:px-[180px] flex items-center justify-between">
                     <div className="flex items-center gap-6">
                         <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
                             <ArrowLeft className="w-4 h-4" />
@@ -53,7 +53,7 @@ export default async function AdminLayout({
                     </nav>
                 </div>
             </header>
-            <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8">
+            <main className="flex-1 w-full px-4 md:px-[180px] py-4 md:py-8">
                 {children}
             </main>
         </div>

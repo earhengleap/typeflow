@@ -13,6 +13,7 @@ import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/constants/config";
 
 export function Footer() {
     const { theme: themeName, setIsSearchOpen } = useMonkeyTypeStore();
@@ -32,7 +33,7 @@ export function Footer() {
     ];
 
     return (
-        <footer className="w-full max-w-5xl mx-auto py-6 md:py-8 px-4 md:px-0 mt-auto transition-all duration-500">
+        <footer className="w-full py-6 md:py-8 px-4 md:px-[180px] mt-auto transition-all duration-500">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
                 {/* Socials & Support */}
                 <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
@@ -98,7 +99,7 @@ export function Footer() {
                                 <span className="relative inline-flex rounded-full h-1 w-1 md:h-1.5 md:w-1.5" style={{ backgroundColor: activeTheme.primary }}></span>
                             </span>
                             <span className="text-[8px] md:text-[10px] font-mono font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all group-hover:text-current">
-                                v1.0.0
+                                v{APP_VERSION}
                             </span>
                         </div>
                         <div className="absolute inset-0 bg-current opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300" />
