@@ -87,3 +87,59 @@ export async function getTopLeaderboard(
         return [];
     }
 }
+
+export async function getGlobalStandingsForUser(userId: string, gameMode: string = "time", config: number = 15) {
+    try {
+        // 1. Get Top 3
+        const top3 = await getTopLeaderboard(3, "allTime", gameMode, config.toString());
+
+        // 2. Get User's Best in this mode
+        const userBest = await db
+            .select({
+                wpm: typingResults.wpm,
+            })
+            .from(typingResults)
+            .where(
+                and(
+                    eq(typingResults.userId, userId),
+                    eq(typingResults.mode, gameMode),
+                    eq(typingResults.config, config)
+                )
+            )
+            .orderBy(desc(typingResults.wpm))
+            .limit(1);
+
+        if (userBest.length === 0) {
+            return { top3, rank: null, userBest: null };
+        }
+
+        const bestWpm = userBest[0].wpm;
+
+        // 3. Calculate Rank
+        // Count how many distinct users have a higher WPM than the user's best WPM in this mode
+        // This is a simplified rank (dense rank style)
+        const higherCount = await db
+            .select({
+                count: sql<number>`count(distinct ${typingResults.userId})`,
+            })
+            .from(typingResults)
+            .where(
+                and(
+                    eq(typingResults.mode, gameMode),
+                    eq(typingResults.config, config),
+                    sql`${typingResults.wpm} > ${bestWpm}`
+                )
+            );
+
+        const rank = (Number(higherCount[0].count) || 0) + 1;
+
+        return {
+            top3,
+            rank,
+            userBest: bestWpm
+        };
+    } catch (error) {
+        console.error("Error fetching global standings for user:", error);
+        return { top3: [], rank: null, userBest: null };
+    }
+}

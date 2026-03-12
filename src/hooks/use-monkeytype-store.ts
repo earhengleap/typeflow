@@ -16,6 +16,7 @@ export interface TypingStats {
     missedChars: number;
     consistency: number;
     totalChars: number;
+    afk: number;
 }
 
 export interface ChartPoint {
@@ -48,6 +49,8 @@ export interface RunHistory {
     consistency: number;
     duration: number;
     date: number;
+    missedChars?: number;
+    afk?: number;
 }
 
 interface MonkeyTypeState {
@@ -162,7 +165,8 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 extraChars: 0,
                 missedChars: 0,
                 consistency: 0,
-                totalChars: 0
+                totalChars: 0,
+                afk: 0
             },
             chartData: [],
             isWrongKeyboardLayout: false,
@@ -187,7 +191,8 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                     extraChars: 0,
                     missedChars: 0,
                     consistency: 0,
-                    totalChars: 0
+                    totalChars: 0,
+                    afk: 0
                 },
                 chartData: [],
                 isWrongKeyboardLayout: false

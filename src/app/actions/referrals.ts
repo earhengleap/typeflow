@@ -81,14 +81,12 @@ export async function processReferral(referredId: string, referrerId?: string) {
         await db.update(users).set({ xp: sql`${users.xp} + 10` }).where(eq(users.id, referrer.id));
 
         // 4. Grant achievements
-        // a_friends_call for the new user
         const { userAchievements } = await import("@/db/schema");
         await db.insert(userAchievements).values({
             userId: referredId,
             achievementId: "a_friends_call"
         }).onConflictDoNothing();
 
-        // the_recruiter & community_builder for the referrer
         const results = await db.select().from(referrals).where(eq(referrals.referrerId, referrer.id));
         const inviteCount = results.length;
 
@@ -108,5 +106,31 @@ export async function processReferral(referredId: string, referrerId?: string) {
         console.log(`[REFERRAL] Linked ${referredId} to ${referrerId}`);
     } catch (error) {
         console.error("[REFERRAL] Error processing referral:", error);
+    }
+}
+
+/**
+ * Admin-only action to fetch referrals for a specific user.
+ */
+export async function getUserReferralsForAdmin(userId: string) {
+    try {
+        const session = await auth();
+        if (session?.user?.role !== "admin" && session?.user?.role !== "superadmin") {
+            throw new Error("Unauthorized");
+        }
+
+        const data = await db
+            .select({
+                id: users.id,
+                name: users.name,
+                joinedAt: users.joinedAt,
+            })
+            .from(referrals)
+            .innerJoin(users, eq(referrals.referredId, users.id))
+            .where(eq(referrals.referrerId, userId));
+
+        return { success: true, data };
+    } catch (e: any) {
+        return { success: false, error: e.message };
     }
 }

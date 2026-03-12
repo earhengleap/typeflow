@@ -91,6 +91,7 @@ export async function sendNotification(data: {
     title: string;
     message: string;
     userId?: string | null;
+    priority?: string;
 }) {
     try {
         const session = await auth();
@@ -103,6 +104,7 @@ export async function sendNotification(data: {
             type: data.type,
             title: data.title,
             message: data.message,
+            priority: data.priority || "info",
             userId: data.userId || null,
         });
         return { success: true };
@@ -143,39 +145,17 @@ export async function promoteUserToAdmin(email: string) {
     }
 }
 
-// Helper to seed some initial data for the user to see
-export async function seedInitialNotifications() {
-    try {
-        const session = await auth();
-        const userId = session?.user?.id;
-        
-        const existing = await db.select().from(notifications).limit(1);
-        if (existing.length > 0) return;
-
-        const initialData = [
-            {
-                type: "announcement",
-                title: "Welcome to TypeFlow!",
-                message: "We're excited to have you here. Start typing to improve your speed!",
-            },
-            {
-                type: "notification",
-                title: "New Achievement!",
-                message: "You've unlocked the 'First Steps' achievement.",
-                userId: userId || undefined,
-            },
-            {
-                type: "inbox",
-                title: "System Update",
-                message: "We've added a new notification system. Check it out!",
-                userId: userId || undefined,
-            }
-        ];
-
-        for (const item of initialData) {
-            await db.insert(notifications).values(item);
-        }
-    } catch (e) {
-        console.error("Error seeding notifications:", e);
-    }
+// Global broadcast to ALL users
+export async function sendGlobalBroadcast(data: {
+    title: string;
+    message: string;
+    priority: "info" | "warning" | "critical";
+}) {
+    return sendNotification({
+        type: "announcement",
+        title: data.title,
+        message: data.message,
+        priority: data.priority,
+        userId: null // Announcement type + null userId = Every user sees it
+    });
 }

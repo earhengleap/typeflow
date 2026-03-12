@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
 import { getUserTypingHistory, updateAccount, getUserAchievements } from "@/app/actions/typing-results";
 import { getReferralCount } from "@/app/actions/referrals";
+import { getGlobalStandingsForUser } from "@/app/actions/leaderboard";
 import { ACHIEVEMENTS, Achievement } from "@/constants/achievements";
 import { toast } from "sonner";
 import {
@@ -57,6 +58,7 @@ export default function AccountPage() {
     const [referralCount, setReferralCount] = useState(0);
     const [referralHistory, setReferralHistory] = useState<{ id: string; name: string | null; joinedAt: Date | null }[]>([]);
     const [isCopied, setIsCopied] = useState(false);
+    const [globalStandings, setGlobalStandings] = useState<Record<number, any>>({});
 
     // Editing state
     const [isEditingBio, setIsEditingBio] = useState(false);
@@ -102,6 +104,13 @@ export default function AccountPage() {
                         setReferralHistory(res.data);
                     }
                     setIsLoading(false);
+                });
+            });
+
+            // Fetch Global Standings for various time configs
+            [15, 30, 60, 120].forEach(config => {
+                getGlobalStandingsForUser(session.user.id, "time", config).then(res => {
+                    setGlobalStandings(prev => ({ ...prev, [config]: res }));
                 });
             });
         }
@@ -639,27 +648,97 @@ export default function AccountPage() {
                             <Trophy size={14} className="opacity-70" />
                             Recent Global Standings
                         </div>
-
-                        <div className="flex flex-col gap-4">
-                            {[15, 60].map((t) => (
-                                <div key={t} className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: activeTheme.bgAlt + "20", borderColor: activeTheme.bgAlt } as React.CSSProperties}>
-                                    <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: activeTheme.bgAlt }}>
-                                        <span className="text-xl font-black" style={{ color: activeTheme.text }}>{t} seconds</span>
-                                        <span className="text-xs font-bold opacity-70 uppercase tracking-widest" style={{ color: activeTheme.textDim }}>Global Rank #---</span>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center justify-between text-xs font-bold opacity-40 uppercase tracking-widest" style={{ color: activeTheme.textDim }}>
-                                            <span>Rank</span>
-                                            <span>User</span>
-                                            <span>WPM</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {[15, 30, 60, 120].map((t) => {
+                                const standing = globalStandings[t];
+                                return ( standing?.userBest ? (
+                                    <div key={t} className="p-6 rounded-[2rem] border flex flex-col gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]" style={{ backgroundColor: activeTheme.bgAlt + "15", borderColor: activeTheme.bgAlt }}>
+                                        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: activeTheme.bgAlt }}>
+                                            <div className="flex flex-col">
+                                                <span className="text-xl font-black" style={{ color: activeTheme.text }}>{t} seconds</span>
+                                                <span className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]" style={{ color: activeTheme.textDim }}>English Mode</span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded" style={{ backgroundColor: activeTheme.primary + "20", color: activeTheme.primary }}>
+                                                        Rank #{standing.rank || "—"}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[9px] font-bold opacity-40 uppercase mt-1" style={{ color: activeTheme.textDim }}>Best: {standing.userBest} wpm</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center justify-center py-8 text-xs italic font-medium opacity-30" style={{ color: activeTheme.textDim }}>
-                                            Complete a public test to see your global standing
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between text-[9px] font-black opacity-30 uppercase tracking-[0.15em] px-2 mb-1" style={{ color: activeTheme.textDim }}>
+                                                <span className="w-8">#</span>
+                                                <span className="flex-1">player</span>
+                                                <span>wpm</span>
+                                            </div>
+                                            
+                                            {standing?.top3 && standing.top3.length > 0 && (
+                                                <div className="flex flex-col gap-2">
+                                                    {standing.top3.map((entry: any, idx: number) => (
+                                                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-2xl text-[11px] font-black transition-all group/row" style={{ backgroundColor: entry.userId === session?.user?.id ? activeTheme.primary + "15" : "transparent" }}>
+                                                            <div className="w-8 flex items-center">
+                                                                <span className="opacity-30 group-hover/row:opacity-100 transition-opacity" style={{ color: idx === 0 ? "#FFD700" : idx === 1 ? "#C0C0C0" : idx === 2 ? "#CD7F32" : activeTheme.textDim }}>{idx + 1}</span>
+                                                            </div>
+                                                            <div className="flex-1 flex items-center gap-3">
+                                                                <div className="w-7 h-7 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                                                    {entry.image ? (
+                                                                        <Image src={entry.image} alt="" width={28} height={28} className="object-cover" />
+                                                                    ) : (
+                                                                        <span className="text-[10px] opacity-40">{entry.name?.charAt(0)}</span>
+                                                                    )}
+                                                                </div>
+                                                                <span className="truncate max-w-[100px]" style={{ color: entry.userId === session?.user?.id ? activeTheme.primary : activeTheme.text }}>{entry.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <span style={{ color: activeTheme.text }}>{entry.wpm}</span>
+                                                                <span className="text-[8px] opacity-20 uppercase font-black">wpm</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    
+                                                    {standing.rank > 3 && (
+                                                        <>
+                                                            <div className="flex justify-center gap-1 opacity-10 py-1">
+                                                                <div className="w-1 h-1 rounded-full bg-current" />
+                                                                <div className="w-1 h-1 rounded-full bg-current" />
+                                                            </div>
+                                                            <div className="flex items-center justify-between p-2.5 rounded-2xl text-[11px] font-black border border-dashed" style={{ backgroundColor: activeTheme.primary + "10", borderColor: activeTheme.primary + "30", color: activeTheme.primary }}>
+                                                                <div className="w-8">#{standing.rank}</div>
+                                                                <div className="flex-1 flex items-center gap-3">
+                                                                    <div className="w-7 h-7 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                                                        {session?.user?.image ? (
+                                                                            <Image src={session.user.image} alt="" width={28} height={28} className="object-cover" />
+                                                                        ) : (
+                                                                            <span className="text-[10px] opacity-40">{session?.user?.name?.charAt(0)}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <span>YOU</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span>{standing.userBest}</span>
+                                                                    <span className="text-[8px] opacity-20 uppercase font-black">wpm</span>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ) : (
+                                    <div key={t} className="p-8 rounded-[2rem] border flex flex-col items-center justify-center gap-3 opacity-40" style={{ backgroundColor: activeTheme.bgAlt + "15", borderColor: activeTheme.bgAlt }}>
+                                        <Trophy size={24} style={{ color: activeTheme.textDim }} />
+                                        <div className="text-center">
+                                            <div className="text-sm font-black" style={{ color: activeTheme.text }}>{t} seconds</div>
+                                            <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1">Ready for challenge</div>
+                                        </div>
+                                    </div>
+                                ) );
+                            })}
                         </div>
+
                     </section>
                 </div>
 

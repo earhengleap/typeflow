@@ -68,7 +68,7 @@ export function Leaderboard({
             const now = new Date();
             const resetType = (searchParams.get("type") as "allTime" | "weekly" | "daily") || initialType;
 
-            let targetDate = new Date();
+            const targetDate = new Date();
             if (resetType === "allTime") {
                 // For allTime, show a recurring 1-hour sync countdown to feel "live"
                 targetDate.setUTCHours(now.getUTCHours() + 1, 0, 0, 0);

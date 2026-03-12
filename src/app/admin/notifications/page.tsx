@@ -8,8 +8,9 @@ import { THEMES } from "@/constants/themes";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { getUsers, sendNotification, getSentNotifications } from "@/app/actions/notifications";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface User {
     id: string;
@@ -30,6 +31,7 @@ export default function AdminNotificationsPage() {
 
     // Form State
     const [type, setType] = useState("announcement");
+    const [priority, setPriority] = useState<"info" | "warning" | "critical">("info");
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
     const [targetUserId, setTargetUserId] = useState<string>("");
@@ -65,6 +67,7 @@ export default function AdminNotificationsPage() {
             type,
             title,
             message,
+            priority,
             userId: type === "announcement" ? null : targetUserId || null,
         });
 
@@ -72,8 +75,11 @@ export default function AdminNotificationsPage() {
             setTitle("");
             setMessage("");
             setTargetUserId("");
+            toast.success("Notification dispatched successfully");
             const updatedHistory = await getSentNotifications();
             setSentHistory(updatedHistory);
+        } else {
+            toast.error("Failed to dispatch notification");
         }
         setSending(false);
     };
@@ -85,6 +91,12 @@ export default function AdminNotificationsPage() {
         u.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const PRIORITY_THEMES = {
+        info: { color: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)", label: "Info" },
+        warning: { color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", label: "Warning" },
+        critical: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", label: "Critical" }
+    };
+
     return (
         <div className="min-h-screen flex flex-col font-mono selection:bg-opacity-30" style={{ backgroundColor: activeTheme.bg, color: activeTheme.text }}>
             <Header activeTheme={activeTheme} />
@@ -93,81 +105,101 @@ export default function AdminNotificationsPage() {
                 <div className="flex flex-col gap-8">
                     {/* Page Header */}
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 rounded-2xl bg-black/5" style={{ color: activeTheme.primary }}>
-                                <Megaphone className="w-8 h-8" />
+                        <div className="flex items-center gap-4">
+                            <div className="p-4 rounded-[2rem] bg-black/5 flex items-center justify-center" style={{ color: activeTheme.primary }}>
+                                <Megaphone className="w-10 h-10" />
                             </div>
-                            <h1 className="text-3xl font-black tracking-tight" style={{ color: activeTheme.text }}>Notification Center</h1>
+                            <div>
+                                <h1 className="text-4xl font-black tracking-tight" style={{ color: activeTheme.text }}>Broadcast Center</h1>
+                                <p className="text-sm opacity-50 font-medium uppercase tracking-[0.2em]" style={{ color: activeTheme.textDim }}>Command & Control Hub</p>
+                            </div>
                         </div>
-                        <p className="text-sm opacity-50 max-w-2xl leading-relaxed" style={{ color: activeTheme.textDim }}>
-                            Dispatch global announcements or targeted messages to individual users. Changes are reflected in real-time.
-                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         {/* Composer Section */}
                         <div className="lg:col-span-3 flex flex-col gap-6">
-                            <div className="p-8 rounded-3xl border border-dashed flex flex-col gap-6" style={{ borderColor: `${activeTheme.textDim}20` }}>
-                                <h2 className="text-lg font-bold flex items-center gap-2 opacity-80">
-                                    <Send className="w-4 h-4" /> Compose Message
-                                </h2>
-
-                                <form onSubmit={handleSend} className="flex flex-col gap-4">
-                                    {/* Type Selection */}
-                                    <div className="grid grid-cols-3 gap-2">
+                            <div className="p-10 rounded-[3rem] border bg-black/5 space-y-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
+                                <div className="space-y-6">
+                                    <label className="text-xs font-black uppercase tracking-widest opacity-40">Message Protocol</label>
+                                    <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { id: "announcement", icon: Megaphone, label: "Announcement" },
-                                            { id: "inbox", icon: Mail, label: "Inbox" },
+                                            { id: "announcement", icon: Megaphone, label: "Broadcast" },
+                                            { id: "inbox", icon: Mail, label: "Private DM" },
                                             { id: "notification", icon: Bell, label: "Alert" }
                                         ].map((t) => (
                                             <button
                                                 key={t.id}
                                                 type="button"
                                                 onClick={() => setType(t.id)}
-                                                className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${type === t.id ? 'border-primary opacity-100' : 'opacity-40 hover:opacity-60'}`}
+                                                className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${type === t.id ? 'opacity-100 scale-105' : 'opacity-40 hover:opacity-100'}`}
                                                 style={{ 
-                                                    borderColor: type === t.id ? activeTheme.primary : `${activeTheme.textDim}20`,
+                                                    borderColor: type === t.id ? activeTheme.primary : 'transparent',
                                                     backgroundColor: type === t.id ? `${activeTheme.primary}10` : 'transparent'
                                                 }}
                                             >
-                                                <t.icon className="w-5 h-5" style={{ color: type === t.id ? activeTheme.primary : 'inherit' }} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">{t.label}</span>
+                                                <t.icon className="w-6 h-6" style={{ color: type === t.id ? activeTheme.primary : 'inherit' }} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{t.label}</span>
                                             </button>
                                         ))}
                                     </div>
+                                </div>
 
+                                <div className="space-y-6">
+                                    <label className="text-xs font-black uppercase tracking-widest opacity-40">Priority Level</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {(Object.keys(PRIORITY_THEMES) as Array<keyof typeof PRIORITY_THEMES>).map((p) => (
+                                            <button
+                                                key={p}
+                                                type="button"
+                                                onClick={() => setPriority(p)}
+                                                className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${priority === p ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
+                                                style={{ 
+                                                    borderColor: priority === p ? PRIORITY_THEMES[p].color : 'transparent',
+                                                    backgroundColor: priority === p ? PRIORITY_THEMES[p].bg : 'rgba(255,255,255,0.02)',
+                                                    color: priority === p ? PRIORITY_THEMES[p].color : activeTheme.text
+                                                }}
+                                            >
+                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PRIORITY_THEMES[p].color }} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{PRIORITY_THEMES[p].label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleSend} className="space-y-6">
                                     {/* Target User (if not announcement) */}
                                     {type !== "announcement" && (
-                                        <div className="flex flex-col gap-2">
+                                        <div className="space-y-4">
                                             <div className="relative">
                                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                                                 <input 
                                                     type="text"
-                                                    placeholder="Search user by name or email..."
+                                                    placeholder="LOCATE TARGET OPERATIVE..."
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="w-full bg-black/5 rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-1 transition-all"
+                                                    className="w-full bg-black/40 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:outline-none focus:ring-1 transition-all"
                                                     style={{ color: activeTheme.text, border: `1px solid ${activeTheme.textDim}15` }}
                                                 />
                                             </div>
                                             
-                                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-xl bg-black/5 border border-dashed" style={{ borderColor: `${activeTheme.textDim}10` }}>
+                                            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-4 rounded-2xl bg-black/20 border border-dashed" style={{ borderColor: `${activeTheme.textDim}15` }}>
                                                 {filteredUsers.length === 0 ? (
-                                                    <p className="text-[10px] opacity-30 p-2 italic w-full text-center">No users found...</p>
+                                                    <p className="text-[10px] opacity-30 italic w-full text-center py-2">NO OPERATIVES FOUND IN DATABASE</p>
                                                 ) : (
                                                     filteredUsers.map(u => (
                                                         <button
                                                             key={u.id}
                                                             type="button"
                                                             onClick={() => setTargetUserId(u.id)}
-                                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${targetUserId === u.id ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}
+                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border ${targetUserId === u.id ? 'opacity-100 ring-2 ring-primary ring-offset-2 ring-offset-black' : 'opacity-40 hover:opacity-100'}`}
                                                             style={{ 
                                                                 borderColor: targetUserId === u.id ? activeTheme.primary : 'transparent',
-                                                                backgroundColor: targetUserId === u.id ? `${activeTheme.primary}20` : 'transparent',
-                                                                color: targetUserId === u.id ? activeTheme.primary : activeTheme.text
+                                                                backgroundColor: targetUserId === u.id ? `${activeTheme.primary}40` : `${activeTheme.textDim}05`,
+                                                                color: targetUserId === u.id ? '#fff' : activeTheme.text
                                                             }}
                                                         >
-                                                            {u.name || u.email || "Unknown User"}
+                                                            {u.name || u.email || "ANONYMOUS"}
                                                         </button>
                                                     ))
                                                 )}
@@ -175,38 +207,40 @@ export default function AdminNotificationsPage() {
                                         </div>
                                     )}
 
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Title</label>
-                                        <input 
-                                            type="text"
-                                            value={title}
-                                            onChange={(e) => setTitle(e.target.value)}
-                                            placeholder="Subject line..."
-                                            className="w-full bg-black/5 rounded-xl py-3 px-4 text-sm focus:outline-none border transition-all"
-                                            style={{ color: activeTheme.text, border: `1px solid ${activeTheme.textDim}15` }}
-                                        />
-                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">Transmission Header</label>
+                                            <input 
+                                                type="text"
+                                                value={title}
+                                                onChange={(e) => setTitle(e.target.value)}
+                                                placeholder="ENTER SUBJECT..."
+                                                className="w-full bg-black/40 rounded-2xl py-4 px-6 text-sm font-bold focus:outline-none border transition-all shadow-inner"
+                                                style={{ color: activeTheme.text, border: `1px solid ${activeTheme.textDim}15` }}
+                                            />
+                                        </div>
 
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-[10px] uppercase font-bold tracking-widest opacity-40">Message Body</label>
-                                        <textarea 
-                                            value={message}
-                                            onChange={(e) => setMessage(e.target.value)}
-                                            placeholder="Write your message here..."
-                                            rows={4}
-                                            className="w-full bg-black/5 rounded-xl py-3 px-4 text-sm focus:outline-none border transition-all resize-none"
-                                            style={{ color: activeTheme.text, border: `1px solid ${activeTheme.textDim}15` }}
-                                        />
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">Data Payload</label>
+                                            <textarea 
+                                                value={message}
+                                                onChange={(e) => setMessage(e.target.value)}
+                                                placeholder="WRITE MESSAGE CONTENT..."
+                                                rows={5}
+                                                className="w-full bg-black/40 rounded-2xl py-4 px-6 text-sm font-bold focus:outline-none border transition-all resize-none shadow-inner"
+                                                style={{ color: activeTheme.text, border: `1px solid ${activeTheme.textDim}15` }}
+                                            />
+                                        </div>
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={sending || !title || !message || (type !== "announcement" && !targetUserId)}
-                                        className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all disabled:opacity-30"
+                                        className="w-full py-5 rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-4 transition-all disabled:opacity-30 hover:scale-[1.01] active:scale-[0.99] shadow-2xl"
                                         style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
                                     >
-                                        {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                                        {sending ? "Dispatching..." : "Send Notification"}
+                                        {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldAlert className="w-5 h-5" />}
+                                        {sending ? "TRANSMITTING..." : "INITIALIZE BROADCAST"}
                                     </button>
                                 </form>
                             </div>

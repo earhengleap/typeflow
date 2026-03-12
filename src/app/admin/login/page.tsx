@@ -31,8 +31,9 @@ export default function AdminLoginPage() {
                 setIsLoading(false);
             } else if (result?.ok) {
                 toast.success("Authentication successful");
-                // The layout protect route will naturally redirect non-admins home when they hit /admin/notifications
-                router.push("/admin/notifications");
+                // Using window.location.href to force a full page reload.
+                // This ensures the server-rendered AdminLayout re-evaluates the session and shows the sidebar.
+                window.location.href = "/admin/users";
             }
         } catch {
             toast.error("An unexpected error occurred");

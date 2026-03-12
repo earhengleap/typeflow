@@ -114,6 +114,7 @@ export const typingResults = pgTable("typing_result", {
     theme: varchar("theme", { length: 50 }).notNull(),
     duration: integer("duration"),
     missedChars: integer("missed_chars"),
+    afk: integer("afk"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 }, (table) => {
     return {
@@ -132,6 +133,7 @@ export const notifications = pgTable("notification", {
     title: text("title").notNull(),
     message: text("message").notNull(),
     read: integer("read").default(0).notNull(), // 0 = unread, 1 = read
+    priority: varchar("priority", { length: 20 }).default("info").notNull(), // 'info', 'warning', 'critical'
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
@@ -147,4 +149,25 @@ export const referrals = pgTable("referral", {
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+// Audit Logs for Admin Actions
+export const auditLogs = pgTable("audit_log", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    adminId: text("admin_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
+    action: varchar("action", { length: 100 }).notNull(), // 'USER_DELETE', 'ROLE_CHANGE', etc.
+    targetId: text("target_id"),
+    details: text("details"),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+// Global System Settings
+export const systemSettings = pgTable("system_setting", {
+    key: varchar("key", { length: 100 }).primaryKey(),
+    value: text("value").notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });

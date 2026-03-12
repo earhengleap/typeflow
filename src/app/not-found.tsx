@@ -88,9 +88,7 @@ export default function NotFound() {
                     <h2 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: activeTheme.text }}>
                         Signal Lost
                     </h2>
-                    <p className="text-sm opacity-60 leading-relaxed">
-                        The transmission you're looking for has drifted into the void. This route might be corrupted or never existed in the current workspace.
-                    </p>
+                    <p className="text-xl opacity-50 mb-8 max-w-md mx-auto">This page doesn&apos;t exist or has been moved to another location.</p>
                 </div>
 
                 {/* Action Buttons */}

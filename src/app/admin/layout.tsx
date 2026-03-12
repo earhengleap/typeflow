@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import React from "react";
-import Link from "next/link";
-import { Users, BellRing, ArrowLeft } from "lucide-react";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { THEMES } from "@/constants/themes";
 
 export default async function AdminLayout({
     children,
@@ -10,51 +10,31 @@ export default async function AdminLayout({
     children: React.ReactNode;
 }) {
     const session = await auth();
-
-    // The login page handles its own redirect logic.
-    // However, since it sits inside /admin, we don't want to show the header if they aren't logged in.
-    
-    // We can just render children directly without the header if they aren't an admin,
-    // and rely on the children (like the login page) to handle what to show.
-    // If they ARE an admin, we show the header.
     
     const role = session?.user?.role;
     const isAdmin = role === "admin" || role === "superadmin";
-    const isSuperAdmin = role === "superadmin";
 
     if (!isAdmin) {
         // Just render the children (which will be the login page).
-        // The login page's layout or page itself handles bouncing standard users to `/`.
         return <>{children}</>;
     }
 
     return (
-        <div className="min-h-screen flex flex-col font-mono bg-black text-white">
-            <header className="border-b border-white/10 p-4">
-                <div className="w-full px-4 md:px-[180px] flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-                            <ArrowLeft className="w-4 h-4" />
-                            <span className="text-sm font-bold tracking-wider">EXIT</span>
-                        </Link>
-                        <h1 className="text-xl font-black tracking-tight text-[#ffaa00]">ADMIN PANEL</h1>
-                    </div>
-                    <nav className="flex items-center gap-6 text-sm font-bold tracking-wider">
-                        <Link href="/admin/notifications" className="flex items-center gap-2 hover:text-[#ffaa00] transition-colors">
-                            <BellRing className="w-4 h-4" />
-                            <span>NOTIFICATIONS</span>
-                        </Link>
-                        {isSuperAdmin && (
-                            <Link href="/admin/users" className="flex items-center gap-2 hover:text-[#ffaa00] transition-colors">
-                                <Users className="w-4 h-4" />
-                                <span>USERS</span>
-                            </Link>
-                        )}
-                    </nav>
+        <div className="min-h-screen flex bg-black text-white selection:bg-[#ffaa00] selection:bg-opacity-30">
+            <AdminSidebar userRole={role as string} />
+            <main className="flex-1 flex flex-col p-4 md:p-8 ml-[80px] md:ml-[var(--sidebar-width,280px)] transition-all duration-300">
+                <style dangerouslySetInnerHTML={{ __html: `
+                    :root {
+                        --sidebar-width: 280px;
+                    }
+                    [data-sidebar-collapsed="true"] {
+                        --sidebar-width: 80px;
+                    }
+                `}} />
+                {/* Content Container with standard max-width for consistency */}
+                <div className="max-w-7xl mx-auto w-full">
+                    {children}
                 </div>
-            </header>
-            <main className="flex-1 w-full px-4 md:px-[180px] py-4 md:py-8">
-                {children}
             </main>
         </div>
     );

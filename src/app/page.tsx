@@ -857,6 +857,7 @@ export default function MonkeyTypePage() {
 
     const inputRef = useRef<HTMLInputElement>(null);
     const keystrokeTimes = useRef<number[]>([]);
+    const lastKeystrokeTime = useRef<number>(Date.now());
     const wordsRef = useRef<HTMLDivElement>(null);
     const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
     const restartRef = useRef<HTMLButtonElement>(null);
@@ -929,8 +930,10 @@ export default function MonkeyTypePage() {
             config,
             language,
             theme,
-            consistency,
+            consistency: stats.consistency,
             duration: durationSeconds,
+            afk: stats.afk,
+            missedChars: stats.missedChars
         });
 
         // Save to Database (Which also handles Leaderboard sync)
@@ -938,13 +941,14 @@ export default function MonkeyTypePage() {
             wpm: stats.wpm,
             rawWpm: stats.rawWpm,
             accuracy: stats.accuracy,
-            consistency: consistency,
+            consistency: stats.consistency,
             mode,
             config,
             language,
             theme,
             duration: durationSeconds,
             missedChars: stats.missedChars,
+            afk: stats.afk
         }).then((res: { success: boolean; xpGained?: number; levelUp?: boolean; newAchievements?: string[] }) => {
             if (res.success && res.xpGained) {
                 setXpResult({
@@ -996,6 +1000,26 @@ export default function MonkeyTypePage() {
             if (elapsedSec <= 0) return;
 
             const s = statsRef.current;
+
+            // AFK Detection
+            const timeSinceLastKey = Date.now() - lastKeystrokeTime.current;
+            let afkSec = 0;
+            if (timeSinceLastKey > 2000) {
+                afkSec = 1;
+            }
+
+            // Consistency Calculation (Variation in WPM samples)
+            const wpmSamples = chartDataRef.current.map(p => p.wpm);
+            wpmSamples.push(s.wpm);
+            let liveConsistency = s.consistency;
+            if (wpmSamples.length > 2) {
+                const mean = wpmSamples.reduce((a, b) => a + b, 0) / wpmSamples.length;
+                const variance = wpmSamples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / wpmSamples.length;
+                const stdDev = Math.sqrt(variance);
+                const cv = stdDev / (mean || 1);
+                liveConsistency = Math.max(0, Math.min(100, Math.round(100 * (1 - cv))));
+            }
+
             const totalErrors = s.incorrectChars + s.extraChars;
             const deltaErrors = Math.max(0, totalErrors - lastErrorCountRef.current);
             lastErrorCountRef.current = totalErrors;
@@ -1009,6 +1033,11 @@ export default function MonkeyTypePage() {
 
             chartDataRef.current = [...chartDataRef.current, point];
             setChartData([...chartDataRef.current]);
+            setStats({ 
+                ...s, 
+                consistency: liveConsistency,
+                afk: s.afk + afkSec 
+            });
         }, 1000);
 
         return () => clearInterval(interval);
@@ -1051,26 +1080,26 @@ export default function MonkeyTypePage() {
         setUserInput(value);
         playClickSound();
 
-        // Track keystroke time for consistency
-        keystrokeTimes.current.push(Date.now());
+        // Track keystroke time for consistency and AFK
+        const now = Date.now();
+        keystrokeTimes.current.push(now);
+        lastKeystrokeTime.current = now;
 
         // Calculate live stats
         let correct = 0;
         let incorrect = 0;
         let extra = 0;
-        const missed = 0;
 
         for (let i = 0; i < value.length; i++) {
             if (i < targetText.length) {
-                const typedChar = value[i];
-                const expectedChar = targetText[i];
-
-                if (typedChar === expectedChar) correct++;
+                if (value[i] === targetText[i]) correct++;
                 else incorrect++;
             } else {
                 extra++;
             }
         }
+
+        const missed = Math.max(0, targetText.length - value.length);
 
         // Trigger error sound if precisely this keystroke introduced an error
         if (value.length > userInput.length) {
@@ -1083,7 +1112,7 @@ export default function MonkeyTypePage() {
             // Only relevant for words mode completion
         }
 
-        const elapsedMs = Date.now() - (startTime || Date.now());
+        const elapsedMs = now - (startTime || now);
         const wpm = calculateWPM(correct, elapsedMs);
         const rawWpm = calculateWPM(value.length, elapsedMs);
 
@@ -1097,7 +1126,8 @@ export default function MonkeyTypePage() {
             wpm,
             rawWpm,
             accuracy: value.length > 0 ? Math.round((correct / (correct + incorrect + extra)) * 100) : 100,
-            consistency: 0
+            consistency: stats.consistency, // Consistency calculated during snapshots
+            afk: stats.afk
         });
 
         if (mode === "words" && value.length >= targetText.length) {
@@ -1114,9 +1144,10 @@ export default function MonkeyTypePage() {
     };
 
     const resetTest = useCallback((newConfig?: GameConfig, newMode?: GameMode, newLang?: Language) => {
-        const targetConfig = newConfig || config;
-        const targetMode = newMode || mode;
-        const targetLang = newLang || language;
+        const store = useMonkeyTypeStore.getState();
+        const targetConfig = newConfig ?? store.config;
+        const targetMode = newMode ?? store.mode;
+        const targetLang = newLang ?? store.language;
 
         generateWords(targetMode, targetConfig, targetLang);
         setUserInput("");
@@ -1131,7 +1162,22 @@ export default function MonkeyTypePage() {
         setGhostPos({ top: 0, left: 0, charIndex: 0 });
         setXpResult(null);
         setTimeout(() => inputRef.current?.focus(), 50);
-    }, [generateWords, mode, config, language, resetLiveState]);
+    }, [generateWords, resetLiveState]);
+    
+    useEffect(() => {
+        // Reset test when navigating back to home if it was finished
+        // (Zustand store persists across route changes in SPA)
+        if (hasMounted && useMonkeyTypeStore.getState().isFinished) {
+            resetTest();
+        }
+    }, [hasMounted, resetTest]);
+
+    // Sync timeLeft to config on initial load (hydration fix)
+    useEffect(() => {
+        if (hasMounted && !isActive && !isFinished && mode === "time" && timeLeft !== config) {
+            setTimeLeft(config as number);
+        }
+    }, [hasMounted, isActive, isFinished, mode, timeLeft, config, setTimeLeft]);
 
     interface CommandItem {
         id: string;
@@ -1877,10 +1923,10 @@ export default function MonkeyTypePage() {
                         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 p-2 sm:p-2 rounded-xl self-center text-[10px] sm:text-xs font-bold shadow-2xl theme-transition max-w-full" style={{ backgroundColor: 'var(--mt-bg-alt)' }}>
                             {/* Group 1: Time / Words */}
                             <div className="flex items-center gap-1 sm:gap-2">
-                                <button onClick={() => { setMode("time"); setConfig(30); resetTest(30, "time"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1 sm:py-1.5 px-2 sm:px-3 transition-all outline-none rounded-lg cursor-pointer", mode === "time" ? "text-[var(--mt-primary)] bg-[var(--mt-bg)]/50" : "hover:text-[var(--mt-text)]")}>
+                                <button onClick={() => { setMode("time"); const nextConfig = (config === 15 || config === 30 || config === 60 || config === 120) ? config : 30; setConfig(nextConfig as GameConfig); resetTest(nextConfig as GameConfig, "time"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1 sm:py-1.5 px-2 sm:px-3 transition-all outline-none rounded-lg cursor-pointer", mode === "time" ? "text-[var(--mt-primary)] bg-[var(--mt-bg)]/50" : "hover:text-[var(--mt-text)]")}>
                                     <Timer className="w-3.5 h-3.5" /> time
                                 </button>
-                                <button onClick={() => { setMode("words"); setConfig(25); resetTest(25, "words"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1 sm:py-1.5 px-2 sm:px-3 transition-all outline-none rounded-lg cursor-pointer", mode === "words" ? "text-[var(--mt-primary)] bg-[var(--mt-bg)]/50" : "hover:text-[var(--mt-text)]")}>
+                                <button onClick={() => { setMode("words"); const nextConfig = (config === 10 || config === 25 || config === 50 || config === 100) ? config : 25; setConfig(nextConfig as GameConfig); resetTest(nextConfig as GameConfig, "words"); }} className={cn("flex items-center gap-1 sm:gap-1.5 py-1 sm:py-1.5 px-2 sm:px-3 transition-all outline-none rounded-lg cursor-pointer", mode === "words" ? "text-[var(--mt-primary)] bg-[var(--mt-bg)]/50" : "hover:text-[var(--mt-text)]")}>
                                     <Type className="w-3.5 h-3.5" /> words
                                 </button>
                             </div>
@@ -2238,182 +2284,132 @@ export default function MonkeyTypePage() {
                         <div className="flex flex-col md:flex-row w-full gap-4 md:gap-8 flex-1 min-h-0">
 
                             {/* LEFT — WPM, Acc + Stats */}
-                            <div className="flex flex-col justify-between w-full md:w-[300px] md:shrink-0 md:border-r md:pr-8" style={{ borderColor: `${activeTheme.textDim}15` }}>
+                            <div className="flex flex-col w-full md:w-[320px] shrink-0 gap-8">
                                 {/* WPM */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.1, duration: 0.4 }}
-                                    className="flex flex-col"
-                                >
-                                    <span className="text-xs font-bold uppercase tracking-[0.2em] mb-1 opacity-60" style={{ color: activeTheme.textDim }}>wpm</span>
-                                    <span className="text-[56px] sm:text-[80px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
-                                    {(() => {
-                                        const { history } = useMonkeyTypeStore.getState();
-                                        const prevBest = history
-                                            .filter(h => h.mode === mode && h.config === config && h.language === language)
-                                            .slice(1)
-                                            .reduce((max, h) => Math.max(max, h.wpm), 0);
-                                        if (prevBest > 0 && stats.wpm > prevBest) {
-                                            return (
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    transition={{ delay: 0.5 }}
-                                                    className="flex items-center gap-1.5 mt-2 text-xs font-bold px-2.5 py-1 rounded-full w-fit"
-                                                    style={{ backgroundColor: `${activeTheme.primary}20`, color: activeTheme.primary }}
-                                                >
-                                                    🏆 New Personal Best!
-                                                </motion.div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
+                                <div className="flex flex-col gap-6">
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.5 }}
+                                        className="flex flex-col"
+                                    >
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40" style={{ color: activeTheme.textDim }}>wpm</span>
+                                            {(() => {
+                                                const { history } = useMonkeyTypeStore.getState();
+                                                const prevBest = history
+                                                    .filter(h => h.mode === mode && h.config === config && h.language === language)
+                                                    .reduce((max, h) => Math.max(max, h.wpm), 0);
+                                                if (prevBest > 0 && stats.wpm > prevBest) {
+                                                    return <span className="text-[8px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded font-black uppercase">Personal Best!</span>
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
+                                        <span className="text-[96px] font-black leading-none tracking-tighter" style={{ color: activeTheme.primary }}>{stats.wpm}</span>
+                                    </motion.div>
 
-                                    {/* XP Gained */}
-                                    <AnimatePresence>
-                                        {xpResult && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="flex flex-col gap-1 mt-4"
-                                            >
-                                                <div className="flex items-center gap-2 text-sm font-bold" style={{ color: activeTheme.primary }}>
-                                                    <Zap size={14} fill="currentColor" />
-                                                    +{xpResult.gained} XP
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.5, delay: 0.1 }}
+                                        className="flex flex-col"
+                                    >
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-40" style={{ color: activeTheme.textDim }}>acc</span>
+                                        <span className="text-[96px] font-black leading-none tracking-tighter" style={{ color: stats.accuracy === 100 ? activeTheme.primary : (stats.accuracy > 90 ? activeTheme.text : activeTheme.error) }}>{stats.accuracy}%</span>
+                                    </motion.div>
+                                </div>
+
+                                {/* Rewards Card */}
+                                <AnimatePresence>
+                                    {xpResult && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 rounded-2xl border flex flex-col gap-3"
+                                            style={{ backgroundColor: `${activeTheme.bgAlt}40`, borderColor: `${activeTheme.primary}20` }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${activeTheme.primary}20`, color: activeTheme.primary }}>
+                                                        <Zap size={16} fill="currentColor" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40" style={{ color: activeTheme.textDim }}>exp earned</span>
+                                                        <span className="text-sm font-black" style={{ color: activeTheme.primary }}>+{xpResult.gained} XP</span>
+                                                    </div>
                                                 </div>
                                                 {xpResult.levelUp && (
-                                                    <motion.div
-                                                        initial={{ scale: 0.9 }}
-                                                        animate={{ scale: [1, 1.1, 1] }}
-                                                        className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 w-fit"
-                                                        style={{ color: activeTheme.primary }}
-                                                    >
-                                                        Level Up! 🚀
-                                                    </motion.div>
+                                                    <div className="bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded text-[10px] font-black uppercase">Lvl Up!</div>
                                                 )}
-                                                {xpResult.newAchievements && xpResult.newAchievements.length > 0 && (
-                                                    <div className="flex flex-col gap-2 mt-2">
-                                                        {xpResult.newAchievements.map(id => {
-                                                            const ach = ACHIEVEMENTS[id];
-                                                            if (!ach) return null;
-                                                            return (
-                                                                <motion.div
-                                                                    key={id}
-                                                                    initial={{ x: -20, opacity: 0 }}
-                                                                    animate={{ x: 0, opacity: 1 }}
-                                                                    className="flex items-center gap-2 p-2 rounded-xl border border-white/5 bg-white/5"
-                                                                >
-                                                                    <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${ach.color}20`, color: ach.color }}>
-                                                                        <ach.icon size={14} />
-                                                                    </div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: activeTheme.text }}>Achievement Unlocked!</span>
-                                                                        <span className="text-[10px] font-bold opacity-60" style={{ color: ach.color }}>{ach.name}</span>
-                                                                    </div>
-                                                                </motion.div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </motion.div>
-
-                                {/* Accuracy with ring */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2, duration: 0.4 }}
-                                    className="flex items-center gap-4 mt-3 sm:mt-4"
-                                >
-                                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
-                                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke={`${activeTheme.textDim}20`} strokeWidth="3" />
-                                            <motion.circle
-                                                cx="18" cy="18" r="15.5" fill="none"
-                                                stroke={stats.accuracy >= 95 ? activeTheme.primary : stats.accuracy >= 80 ? activeTheme.text : activeTheme.error}
-                                                strokeWidth="3"
-                                                strokeLinecap="round"
-                                                strokeDasharray={`${stats.accuracy * 0.9738} 97.38`}
-                                                initial={{ strokeDasharray: "0 97.38" }}
-                                                animate={{ strokeDasharray: `${stats.accuracy * 0.9738} 97.38` }}
-                                                transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-base sm:text-lg font-black" style={{ color: activeTheme.text }}>{stats.accuracy}%</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40" style={{ color: activeTheme.textDim }}>accuracy</span>
-                                        <span className="text-[10px] mt-1 opacity-50" style={{ color: activeTheme.textDim }}>
-                                            {stats.accuracy >= 95 ? "Excellent" : stats.accuracy >= 85 ? "Good" : stats.accuracy >= 70 ? "Average" : "Needs work"}
-                                        </span>
-                                    </div>
-                                </motion.div>
-
-                                {/* Divider */}
-                                <div className="my-3 sm:my-5 border-t" style={{ borderColor: `${activeTheme.textDim}15` }} />
-
-                                {/* Character Breakdown — visual */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.3, duration: 0.4 }}
-                                    className="flex flex-col gap-2"
-                                >
-                                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-35" style={{ color: activeTheme.textDim }}>characters</span>
-                                    <div className="flex gap-3 flex-wrap">
-                                        {[
-                                            { label: "correct", value: stats.correctChars, color: activeTheme.primary },
-                                            { label: "incorrect", value: stats.incorrectChars, color: activeTheme.error },
-                                            { label: "extra", value: stats.extraChars, color: `${activeTheme.error}80` },
-                                            { label: "missed", value: stats.missedChars, color: activeTheme.textDim },
-                                        ].map((c, i) => (
-                                            <motion.div
-                                                key={c.label}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.4 + i * 0.08 }}
-                                                className="flex flex-col items-center px-3 py-2 rounded-lg"
-                                                style={{ backgroundColor: `${c.color}12` }}
-                                            >
-                                                <span className="text-lg font-black leading-none" style={{ color: c.color }}>{c.value}</span>
-                                                <span className="text-[8px] font-bold uppercase tracking-wider mt-1 opacity-60" style={{ color: c.color }}>{c.label}</span>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </motion.div>
-
-                                {/* Secondary Stats */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.4, duration: 0.4 }}
-                                    className="flex flex-row md:flex-col gap-3 sm:gap-4 flex-1 flex-wrap mt-3"
-                                >
-                                    {[
-                                        { label: "test type", value: `${mode} ${config}`, sub: language, primary: true },
-                                        { label: "raw wpm", value: String(stats.rawWpm), primary: true },
-                                        { label: "consistency", value: `${stats.consistency}%`, primary: false },
-                                        { label: "time", value: `${chartData.length > 0 ? chartData[chartData.length - 1].second : 0}s`, primary: false },
-                                    ].map((s, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.5 + i * 0.06 }}
-                                            className="flex flex-col"
-                                        >
-                                            <span className="text-[9px] font-bold uppercase tracking-widest opacity-35 mb-0.5" style={{ color: activeTheme.textDim }}>{s.label}</span>
-                                            <span className="text-xl font-black leading-tight tracking-tighter" style={{ color: s.primary ? activeTheme.primary : activeTheme.text }}>
-                                                {s.value}
-                                            </span>
-                                            {s.sub && <span className="text-[10px] opacity-35 mt-0.5" style={{ color: activeTheme.textDim }}>{s.sub}</span>}
+                                            </div>
+                                            
+                                            {xpResult.newAchievements && xpResult.newAchievements.length > 0 && (
+                                                <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: `${activeTheme.bgAlt}` }}>
+                                                    {xpResult.newAchievements.map(id => {
+                                                        const ach = ACHIEVEMENTS[id];
+                                                        if (!ach) return null;
+                                                        return (
+                                                            <div key={id} className="flex items-center gap-2">
+                                                                <ach.icon size={12} style={{ color: ach.color }} />
+                                                                <span className="text-[9px] font-bold" style={{ color: activeTheme.text }}>{ach.name} unlocked</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </motion.div>
-                                    ))}
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Detailed Stats Grid */}
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    className="grid grid-cols-2 gap-y-8 gap-x-4"
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>test type</span>
+                                        <span className="text-xl font-bold" style={{ color: activeTheme.text }}>{mode} {config}</span>
+                                        <span className="text-[10px] font-medium opacity-40 mt-1" style={{ color: activeTheme.textDim }}>{theme}</span>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>raw</span>
+                                        <span className="text-3xl font-black" style={{ color: activeTheme.primary }}>{stats.rawWpm}</span>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>characters</span>
+                                        <div className="flex gap-1.5 items-baseline">
+                                            <span className="text-xl font-bold" style={{ color: activeTheme.text }}>{stats.correctChars}</span>
+                                            <span className="opacity-20">/</span>
+                                            <span className="text-sm font-bold opacity-60" style={{ color: activeTheme.error }}>{stats.incorrectChars}</span>
+                                            <span className="opacity-20">/</span>
+                                            <span className="text-sm font-bold opacity-60" style={{ color: activeTheme.error }}>{stats.extraChars}</span>
+                                            <span className="opacity-20">/</span>
+                                            <span className="text-sm font-bold opacity-40" style={{ color: activeTheme.textDim }}>{stats.missedChars}</span>
+                                        </div>
+                                        <span className="text-[8px] font-bold uppercase opacity-30 mt-1" style={{ color: activeTheme.textDim }}>corr/inc/extra/miss</span>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>consistency</span>
+                                        <span className="text-xl font-black" style={{ color: stats.consistency > 70 ? activeTheme.text : (stats.consistency > 50 ? activeTheme.textDim : activeTheme.error) }}>{stats.consistency}%</span>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>time</span>
+                                        <span className="text-xl font-bold" style={{ color: activeTheme.text }}>{chartData.length}s</span>
+                                    </div>
+
+                                    {stats.afk > 0 && (
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1" style={{ color: activeTheme.textDim }}>afk</span>
+                                            <span className="text-xl font-bold" style={{ color: activeTheme.error }}>{stats.afk}s</span>
+                                        </div>
+                                    )}
                                 </motion.div>
                             </div>
 

@@ -7,7 +7,7 @@ import { desc, eq, sql, and } from "drizzle-orm";
 import type { RunHistory, Theme } from "@/hooks/use-monkeytype-store";
 import { revalidatePath } from "next/cache";
 
-export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { duration: number; consistency: number; missedChars?: number }) {
+export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { duration: number; consistency: number; missedChars?: number; afk?: number }) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
@@ -25,6 +25,7 @@ export async function saveTypingResult(run: Omit<RunHistory, "id" | "date"> & { 
             theme: run.theme,
             duration: run.duration,
             missedChars: run.missedChars || 0,
+            afk: run.afk || 0,
         });
 
         // 2. Fetch current user stats for xp/level/streak logic
@@ -191,6 +192,8 @@ export async function getUserTypingHistory(userId?: string) {
             theme: r.theme as Theme,
             consistency: r.consistency || 0,
             duration: r.duration || 0,
+            afk: r.afk || 0,
+            missedChars: r.missedChars || 0,
             date: r.createdAt.getTime(),
         }));
 

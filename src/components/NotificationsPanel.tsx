@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, BellOff, Info, Mail, Megaphone, Trash2, CheckCircle2 } from "lucide-react";
 import { THEMES } from "@/constants/themes";
 import { APP_VERSION } from "@/constants/config";
-import { getNotifications, markNotificationAsRead, markAllAsRead, seedInitialNotifications } from "@/app/actions/notifications";
+import { getNotifications, markNotificationAsRead, markAllAsRead } from "@/app/actions/notifications";
 
 interface NotificationItem {
     id: string;
@@ -11,6 +11,7 @@ interface NotificationItem {
     title: string;
     message: string;
     read: number;
+    priority: string;
     createdAt: Date;
 }
 
@@ -32,8 +33,6 @@ export function NotificationsPanel({ isOpen, onClose, activeTheme }: Notificatio
 
     const refreshData = async () => {
         setLoading(true);
-        // Seed some data if it's the first time
-        await seedInitialNotifications();
         const res = await getNotifications();
         setData(res as any);
         setLoading(false);
@@ -93,16 +92,26 @@ export function NotificationsPanel({ isOpen, onClose, activeTheme }: Notificatio
                                 animate={{ opacity: 1, y: 0 }}
                                 className={`p-4 rounded-xl border transition-all relative group ${item.read === 0 ? 'bg-black/5' : 'opacity-70'}`}
                                 style={{ 
-                                    borderColor: item.read === 0 ? `${activeTheme.primary}30` : `${activeTheme.textDim}10`,
-                                    backgroundColor: item.read === 0 ? `${activeTheme.primary}05` : 'transparent'
+                                    borderColor: item.priority === "critical" ? "#ef4444" : item.priority === "warning" ? "#f59e0b" : item.read === 0 ? `${activeTheme.primary}30` : `${activeTheme.textDim}10`,
+                                    backgroundColor: item.priority === "critical" ? "rgba(239, 68, 68, 0.05)" : item.read === 0 ? `${activeTheme.primary}05` : 'transparent'
                                 }}
                             >
                                 <div className="flex flex-col gap-1 pr-8">
-                                    <h4 className="text-sm font-bold truncate pr-4">{item.title}</h4>
+                                    <div className="flex items-center gap-2">
+                                        {item.priority === "critical" && <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                                        <h4 className="text-sm font-bold truncate pr-4">{item.title}</h4>
+                                    </div>
                                     <p className="text-xs opacity-60 line-clamp-2 leading-relaxed">{item.message}</p>
-                                    <span className="text-[10px] opacity-30 font-medium mt-1">
-                                        {new Date(item.createdAt).toLocaleDateString()}
-                                    </span>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <span className="text-[10px] opacity-30 font-medium">
+                                            {new Date(item.createdAt).toLocaleDateString()}
+                                        </span>
+                                        {item.priority !== "info" && (
+                                            <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-black/20" style={{ color: item.priority === "critical" ? "#ef4444" : "#f59e0b" }}>
+                                                {item.priority}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 {item.read === 0 && (
                                     <button 
@@ -201,4 +210,3 @@ export function NotificationsPanel({ isOpen, onClose, activeTheme }: Notificatio
         </AnimatePresence>
     );
 }
-
