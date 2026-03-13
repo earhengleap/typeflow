@@ -9,11 +9,15 @@
   --color-mt-error: var(--mt-error);
   --font-hanuman: var(--font-hanuman);
   --font-jetbrains: var(--font-jetbrains);
+  --font-roboto: var(--font-roboto);
 }
 
 @layer utilities {
   .font-hanuman {
     font-family: var(--font-hanuman), ui-sans-serif, system-ui;
+  }
+  .font-roboto {
+    font-family: var(--font-roboto), monospace;
   }
 }
 

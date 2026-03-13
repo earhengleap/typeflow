@@ -5,11 +5,12 @@ import { registerUser } from "@/app/actions/auth";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import { UserPlus, LogIn, Github, Mail, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import { forgotPassword } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
+import { Header } from "@/components/Header";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -47,6 +48,38 @@ export default function LoginPage() {
     });
 
     const [forgotEmail, setForgotEmail] = useState("");
+
+    // Listen for auth success from popup
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data === "auth-success") {
+                router.push("/");
+                router.refresh();
+            }
+        };
+
+        window.addEventListener("message", handleMessage);
+        return () => window.removeEventListener("message", handleMessage);
+    }, [router]);
+
+    const handleGooglePopup = () => {
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        const popup = window.open(
+            "/auth/popup-signin",
+            "google-signin",
+            `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
+        );
+
+        if (!popup) {
+            // Fallback for popup blockers
+            signIn("google", { callbackUrl: "/" });
+        }
+    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -141,210 +174,212 @@ export default function LoginPage() {
     const inputStyle = {
         backgroundColor: activeTheme.bgAlt,
         color: activeTheme.text,
-        borderColor: "transparent",
+        border: "none",
+        outline: "none",
+        fontSize: "0.85rem",
     };
 
     const buttonStyle = {
         backgroundColor: activeTheme.bgAlt,
         color: activeTheme.text,
+        fontSize: "0.85rem",
     };
 
     return (
         <div
-            className="min-h-screen flex flex-col font-mono transition-colors duration-500 overflow-x-hidden relative"
+            className="min-h-screen flex flex-col items-center font-roboto transition-colors duration-500 overflow-x-hidden relative pt-1 sm:pt-1.5 md:pt-3 px-[var(--content-px)]"
             style={{ backgroundColor: activeTheme.bg, color: activeTheme.textDim }}
         >
-            {/* Background Glow */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
-                <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full blur-[120px]"
-                    style={{ backgroundColor: activeTheme.primary }}
-                ></div>
-            </div>
-
-            {/* Top Navigation */}
-            <header className="p-8 z-20">
-                <Link href="/" className="flex items-center gap-2 group transition-opacity hover:opacity-80 cursor-pointer w-fit">
-                    <ArrowLeft size={18} style={{ color: activeTheme.primary }} />
-                    <span className="text-xl font-bold tracking-tighter" style={{ color: activeTheme.text }}>
-                        typeflow<span style={{ color: activeTheme.primary }}>.</span>
-                    </span>
-                </Link>
-            </header>
-
-            <main className="flex-1 flex items-center justify-center p-6 md:p-12 z-10">
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="w-full px-4 md:px-[180px] grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-32 items-start"
-                >
-                    {/* Register Column */}
-                    <motion.div variants={itemVariants} className="flex flex-col gap-8">
-                        <div className="flex items-center gap-3 text-2xl font-bold tracking-tight" style={{ color: activeTheme.text }}>
-                            <UserPlus size={28} style={{ color: activeTheme.primary }} />
-                            register
+            <Header activeTheme={activeTheme} />
+            <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 z-10 w-full">
+                <div className="w-full max-w-[950px] grid grid-cols-1 md:grid-cols-2 gap-x-12 lg:gap-x-24 gap-y-16 py-8 md:py-20 items-start">
+                    {/* Register Section */}
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="flex flex-col gap-6"
+                    >
+                        <div className="flex items-center gap-2 text-xl font-bold" style={{ color: activeTheme.text }}>
+                            <UserPlus size={20} style={{ color: activeTheme.primary }} />
+                            <span>register</span>
                         </div>
 
-                        <form onSubmit={handleRegister} className="flex flex-col gap-4">
-                            <motion.input
-                                variants={itemVariants}
-                                type="text"
-                                placeholder="userName"
-                                required
-                                value={registerData.name}
-                                onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
-                            <motion.input
-                                variants={itemVariants}
-                                type="email"
-                                placeholder="email"
-                                required
-                                value={registerData.email}
-                                onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
-                            <motion.input
-                                variants={itemVariants}
-                                type="email"
-                                placeholder="verify email"
-                                required
-                                value={registerData.verifyEmail}
-                                onChange={(e) => setRegisterData({ ...registerData, verifyEmail: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
-                            <motion.div variants={itemVariants} className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="password"
+                        <form onSubmit={handleRegister} className="flex flex-col gap-2">
+                                <motion.input
+                                    variants={itemVariants}
+                                    whileFocus={{ scale: 1.01 }}
+                                    type="text"
+                                    placeholder="username"
                                     required
-                                    value={registerData.password}
-                                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                                    value={registerData.name}
+                                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                                    className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                    style={inputStyle}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </motion.div>
-                            <motion.div variants={itemVariants} className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="verify password"
+                                <motion.input
+                                    variants={itemVariants}
+                                    whileFocus={{ scale: 1.01 }}
+                                    type="email"
+                                    placeholder="email"
                                     required
-                                    value={registerData.verifyPassword}
-                                    onChange={(e) => setRegisterData({ ...registerData, verifyPassword: e.target.value })}
-                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                                    value={registerData.email}
+                                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                                    className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                    style={inputStyle}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </motion.div>
+                                <motion.input
+                                    variants={itemVariants}
+                                    whileFocus={{ scale: 1.01 }}
+                                    type="email"
+                                    placeholder="verify email"
+                                    required
+                                    value={registerData.verifyEmail}
+                                    onChange={(e) => setRegisterData({ ...registerData, verifyEmail: e.target.value })}
+                                    className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                    style={inputStyle}
+                                />
+                                <motion.div variants={itemVariants} className="relative">
+                                    <motion.input
+                                        whileFocus={{ scale: 1.01 }}
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="password"
+                                        required
+                                        value={registerData.password}
+                                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                                        className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                        style={inputStyle}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </motion.div>
+                                <motion.div variants={itemVariants} className="relative">
+                                    <motion.input
+                                        whileFocus={{ scale: 1.01 }}
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="verify password"
+                                        required
+                                        value={registerData.verifyPassword}
+                                        onChange={(e) => setRegisterData({ ...registerData, verifyPassword: e.target.value })}
+                                        className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                        style={inputStyle}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </motion.div>
 
-                            <motion.button
-                                variants={itemVariants}
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] mt-4 shadow-lg cursor-pointer disabled:opacity-50"
-                                style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
-                            >
-                                <UserPlus size={20} />
-                                {isLoading ? "registering..." : "sign up"}
-                            </motion.button>
+                                <motion.button
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold transition-all hover:bg-white/[0.05] mt-2 group cursor-pointer"
+                                    style={buttonStyle}
+                                >
+                                    <UserPlus size={16} className="group-hover:text-primary transition-colors" style={{ color: activeTheme.primary }} />
+                                    {isLoading ? "registering..." : "sign up"}
+                                </motion.button>
                         </form>
                     </motion.div>
 
-                    {/* Login Column */}
-                    <motion.div variants={itemVariants} className="flex flex-col gap-8">
-                        <div className="flex items-center gap-3 text-2xl font-bold tracking-tight" style={{ color: activeTheme.text }}>
-                            <LogIn size={28} style={{ color: activeTheme.primary }} />
-                            login
+                    {/* Login Section */}
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="flex flex-col gap-6"
+                    >
+                        <div className="flex items-center gap-2 text-xl font-bold" style={{ color: activeTheme.text }}>
+                            <LogIn size={20} style={{ color: activeTheme.primary }} />
+                            <span>login</span>
                         </div>
 
                         {/* Social Logins */}
-                        <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => signIn("google", { callbackUrl: "/" })}
-                                className="flex items-center justify-center gap-3 py-4 rounded-xl transition-all hover:opacity-80 active:scale-[0.98] border border-transparent hover:border-current cursor-pointer shadow-sm"
-                                style={buttonStyle}
-                            >
-                                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 grayscale group-hover:grayscale-0" />
-                                <span className="text-sm font-bold">Google</span>
-                            </button>
-                            <button
-                                onClick={() => signIn("github", { callbackUrl: "/" })}
-                                className="flex items-center justify-center gap-3 py-4 rounded-xl transition-all hover:opacity-80 active:scale-[0.98] border border-transparent hover:border-current cursor-pointer shadow-sm relative group"
-                                style={buttonStyle}
-                            >
-                                <Github size={20} className="opacity-60 group-hover:opacity-100" />
-                                <span className="text-sm font-bold">GitHub</span>
-                            </button>
+                        <motion.div variants={itemVariants} className="grid grid-cols-2 gap-2">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleGooglePopup}
+                                    className="flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all hover:bg-white/[0.05] group cursor-pointer"
+                                    style={buttonStyle}
+                                >
+                                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-3.5 h-3.5 grayscale group-hover:grayscale-0 transition-all opacity-60 group-hover:opacity-100" />
+                                    <span className="font-bold">Google</span>
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => signIn("github", { callbackUrl: "/" })}
+                                    className="flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all hover:bg-white/[0.05] group cursor-pointer"
+                                    style={buttonStyle}
+                                >
+                                    <Github size={16} className="opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                    <span className="font-bold">GitHub</span>
+                                </motion.button>
                         </motion.div>
 
-                        <motion.div variants={itemVariants} className="flex items-center gap-4 py-2">
-                            <div className="flex-1 h-px opacity-10" style={{ backgroundColor: activeTheme.textDim }}></div>
-                            <span className="text-[10px] uppercase tracking-widest opacity-30">or continue with mail</span>
-                            <div className="flex-1 h-px opacity-10" style={{ backgroundColor: activeTheme.textDim }}></div>
+                        <motion.div variants={itemVariants} className="flex items-center gap-4 py-2 opacity-30">
+                            <div className="flex-1 h-px bg-current"></div>
+                            <span className="text-[10px] uppercase font-bold tracking-widest">or</span>
+                            <div className="flex-1 h-px bg-current"></div>
                         </motion.div>
 
                         {/* Feedback Messages */}
-                        {error && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs text-center font-bold px-4 py-2 rounded-lg bg-red-400/10">
-                                {error}
-                            </motion.div>
-                        )}
-                        {success && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-green-400 text-xs text-center font-bold px-4 py-2 rounded-lg bg-green-400/10">
-                                {success}
+                        {(error || success) && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className={`text-[10px] text-center font-bold px-4 py-2 rounded-lg ${error ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}
+                            >
+                                {error || success}
                             </motion.div>
                         )}
 
-                        {/* Email Login Form */}
-                        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                            <motion.input
-                                variants={itemVariants}
-                                type="email"
-                                placeholder="email"
-                                required
-                                value={loginData.email}
-                                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                                className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                            />
-                            <motion.div variants={itemVariants} className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="password"
+                        <form onSubmit={handleLogin} className="flex flex-col gap-2">
+                                <motion.input
+                                    variants={itemVariants}
+                                    whileFocus={{ scale: 1.01 }}
+                                    type="email"
+                                    placeholder="email"
                                     required
-                                    value={loginData.password}
-                                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
+                                    value={loginData.email}
+                                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                                    className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                    style={inputStyle}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </motion.div>
+                                <motion.div variants={itemVariants} className="relative">
+                                    <motion.input
+                                        whileFocus={{ scale: 1.01 }}
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="password"
+                                        required
+                                        value={loginData.password}
+                                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                                        className="w-full px-3 py-2.5 rounded-lg transition-all focus:bg-white/[0.03] cursor-text"
+                                        style={inputStyle}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </motion.div>
 
-                            <motion.div variants={itemVariants} className="flex items-center justify-between text-xs px-1">
-                                <label className="flex items-center gap-2 cursor-pointer group select-none">
+                            <motion.div variants={itemVariants} className="flex items-center justify-between text-[10px] px-1 font-bold">
+                                <label className="flex items-center gap-2 cursor-pointer group select-none opacity-60 hover:opacity-100 transition-opacity">
                                     <input
                                         type="checkbox"
                                         className="hidden"
@@ -352,103 +387,119 @@ export default function LoginPage() {
                                         onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })}
                                     />
                                     <div
-                                        className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
-                                        style={{
-                                            borderColor: loginData.rememberMe ? activeTheme.primary : activeTheme.textDim,
-                                            backgroundColor: loginData.rememberMe ? activeTheme.primary + "20" : "transparent"
-                                        }}
+                                        className="w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center transition-all bg-transparent"
+                                        style={{ borderColor: activeTheme.textDim + "40" }}
                                     >
-                                        <div
-                                            className="w-2 h-2 rounded-full transition-opacity"
-                                            style={{
-                                                backgroundColor: activeTheme.primary,
-                                                opacity: loginData.rememberMe ? 1 : 0
-                                            }}
-                                        ></div>
+                                        <motion.div
+                                            initial={false}
+                                            animate={{ opacity: loginData.rememberMe ? 1 : 0 }}
+                                            className="w-2 h-2 rounded-[1px]"
+                                            style={{ backgroundColor: activeTheme.primary }}
+                                        />
                                     </div>
-                                    remember me
+                                    <span>remember me</span>
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => setShowForgotModal(true)}
-                                    className="hover:underline opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-                                    style={{ color: activeTheme.primary }}
+                                    className="opacity-40 hover:opacity-100 transition-opacity cursor-pointer flex items-center gap-1 group"
                                 >
-                                    forgot password?
+                                    <span className="group-hover:text-primary transition-colors">forgot password?</span>
                                 </button>
                             </motion.div>
 
-                            <motion.button
-                                variants={itemVariants}
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] mt-4 shadow-lg cursor-pointer disabled:opacity-50"
-                                style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
-                            >
-                                <LogIn size={20} />
-                                {isLoading ? "signing in..." : "sign in"}
-                            </motion.button>
+                                <motion.button
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold transition-all hover:bg-white/[0.05] mt-2 group cursor-pointer"
+                                    style={buttonStyle}
+                                >
+                                    <LogIn size={16} className="group-hover:text-primary transition-colors" style={{ color: activeTheme.primary }} />
+                                    {isLoading ? "signing in..." : "sign in"}
+                                </motion.button>
                         </form>
                     </motion.div>
-
-                </motion.div>
+                </div>
             </main>
 
             {/* Forgot Password Modal */}
             {showForgotModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="w-full max-w-md p-8 rounded-3xl shadow-2xl relative"
-                        style={{ backgroundColor: activeTheme.bg, border: `1px solid ${activeTheme.bgAlt}` }}
+                        className="w-full max-w-sm p-8 rounded-lg relative overflow-hidden flex flex-col gap-6"
+                        style={{ backgroundColor: activeTheme.bg }}
                     >
-                        <button
-                            onClick={() => setShowForgotModal(false)}
-                            className="absolute top-6 right-6 opacity-30 hover:opacity-100 transition-opacity cursor-pointer"
-                        >
-                            <ArrowLeft size={18} />
-                        </button>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold" style={{ color: activeTheme.text }}>forgot password</h3>
+                            <button
+                                onClick={() => setShowForgotModal(false)}
+                                className="opacity-30 hover:opacity-100 transition-opacity cursor-pointer rounded-full p-1"
+                            >
+                                <ArrowLeft size={16} />
+                            </button>
+                        </div>
+                        
+                        <p className="text-xs leading-relaxed opacity-60">
+                            Enter your email and we'll send you a link to reset your password.
+                        </p>
 
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-col gap-2">
-                                <h3 className="text-xl font-bold" style={{ color: activeTheme.text }}>forgot password</h3>
-                                <p className="text-xs opacity-60">Enter your email and we'll send you a link to reset your password.</p>
-                            </div>
-
-                            <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
-                                <input
-                                    type="email"
-                                    placeholder="your email"
-                                    required
-                                    value={forgotEmail}
-                                    onChange={(e) => setForgotEmail(e.target.value)}
-                                    className="w-full px-5 py-3 rounded-xl outline-none transition-all focus:ring-2 border border-transparent shadow-sm"
-                                    style={{ ...inputStyle, "--tw-ring-color": activeTheme.primary } as any}
-                                />
-                                <button
+                        <form onSubmit={handleForgotPassword} className="flex flex-col gap-3">
+                            <input
+                                type="email"
+                                placeholder="your email"
+                                required
+                                value={forgotEmail}
+                                onChange={(e) => setForgotEmail(e.target.value)}
+                                className="w-full px-3 py-2.5 rounded-lg outline-none"
+                                style={inputStyle}
+                            />
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-4 rounded-xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg cursor-pointer disabled:opacity-50"
-                                    style={{ backgroundColor: activeTheme.primary, color: activeTheme.bg }}
+                                    className="w-full py-2.5 rounded-lg font-bold transition-all hover:bg-white/[0.05] cursor-pointer"
+                                    style={buttonStyle}
                                 >
                                     {isLoading ? "sending..." : "send reset link"}
-                                </button>
-                            </form>
-                        </div>
+                                </motion.button>
+                        </form>
                     </motion.div>
                 </div>
             )}
 
-            <footer className="p-12 text-center text-[10px] tracking-widest uppercase opacity-20 flex flex-col gap-4 z-10">
-                <div className="flex justify-center gap-8">
-                    <button className="hover:opacity-100 transition-opacity cursor-pointer">about</button>
-                    <button className="hover:opacity-100 transition-opacity cursor-pointer">contact</button>
-                    <button className="hover:opacity-100 transition-opacity cursor-pointer">terms</button>
-                    <button className="hover:opacity-100 transition-opacity cursor-pointer">privacy</button>
+            <footer className="w-full flex flex-col items-center gap-6 py-12 px-4 opacity-30 text-[10px] font-bold tracking-tight mt-auto">
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                    {[
+                        { label: "contact", icon: "mail" },
+                        { label: "support", icon: "help-circle" },
+                        { label: "discord", icon: "message-square" },
+                        { label: "twitter", icon: "twitter" },
+                        { label: "terms", icon: "file-text" },
+                        { label: "security", icon: "shield" },
+                        { label: "privacy", icon: "lock" }
+                    ].map(item => (
+                        <button key={item.label} className="flex items-center gap-1.5 hover:opacity-100 transition-opacity cursor-pointer">
+                           {item.label}
+                        </button>
+                    ))}
                 </div>
-                <Link href="/" className="hover:opacity-100 transition-opacity cursor-pointer">typeflow &copy; 2026</Link>
+                <div className="flex items-center gap-2">
+                    <span className="opacity-40 select-none">v1.24.11</span>
+                    <Link href="/" className="hover:opacity-100 transition-opacity cursor-pointer flex items-center gap-1.5 group">
+                        <span className="group-hover:text-primary transition-colors">typeflow</span>
+                        <span>&copy; 2026</span>
+                    </Link>
+                </div>
             </footer>
         </div>
     );
 }
+
+
+

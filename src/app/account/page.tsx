@@ -21,7 +21,6 @@ import {
     Check,
     X,
     User,
-    Keyboard as KeyboardIcon,
     Award,
     Link as LinkIcon,
     Copy,
@@ -29,6 +28,7 @@ import {
     Users,
     Check as CheckIcon
 } from "lucide-react";
+import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
 
 interface UserData {
     level?: number;
@@ -334,7 +334,7 @@ export default function AccountPage() {
                         {/* Keyboard Section */}
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold" style={{ backgroundColor: activeTheme.bgAlt, color: activeTheme.textDim }}>
-                                <KeyboardIcon size={14} />
+                                <AuthenticKeyboard size={14} />
                                 {isEditingKeyboard ? (
                                     <input
                                         autoFocus

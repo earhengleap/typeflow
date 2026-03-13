@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { THEMES } from "@/constants/themes";
-import { LogIn, LogOut, User, Settings, BarChart2 } from "lucide-react";
+import { LogIn, LogOut, User, BarChart2 } from "lucide-react";
+import { AuthenticSettings } from "@/components/icons/AuthenticSettings";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { useEffect, useState, useRef } from "react";
 import { getUserTypingHistory } from "@/app/actions/typing-results";
@@ -59,22 +60,14 @@ export function UserMenu() {
 
     if (status === "unauthenticated") {
         return (
-            <button
-                onClick={() => signIn()}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm transition-all duration-200 cursor-pointer"
+            <Link
+                href="/login"
+                className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/5 active:scale-95 group"
                 style={{ color: activeTheme.textDim }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.color = activeTheme.text;
-                    e.currentTarget.style.backgroundColor = activeTheme.bgAlt;
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.color = activeTheme.textDim;
-                    e.currentTarget.style.backgroundColor = "transparent";
-                }}
+                title="Sign In"
             >
-                <LogIn size={16} />
-                Sign In
-            </button>
+                <User size={20} className="sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+            </Link>
         );
     }
 
@@ -159,7 +152,7 @@ export function UserMenu() {
                                     e.currentTarget.style.color = activeTheme.textDim;
                                 }}
                             >
-                                <Settings size={18} className="group-hover:opacity-100" />
+                                <AuthenticSettings size={18} className="group-hover:opacity-100" />
                                 <span className="font-medium">Account Settings</span>
                             </Link>
                             

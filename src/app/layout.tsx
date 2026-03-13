@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Hanuman } from "next/font/google";
+import { JetBrains_Mono, Hanuman, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { Analytics } from "@vercel/analytics/next"
@@ -17,6 +17,13 @@ const hanuman = Hanuman({
   weight: ["100", "300", "400", "700", "900"],
   subsets: ["khmer", "latin"],
   variable: "--font-hanuman",
+  display: "swap",
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700"],
+  variable: "--font-roboto",
   display: "swap",
 });
 
@@ -48,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${jetbrainsMono.variable} ${hanuman.variable} antialiased`}
+        className={`${jetbrainsMono.variable} ${hanuman.variable} ${robotoMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <SessionProvider refetchOnWindowFocus={false}>

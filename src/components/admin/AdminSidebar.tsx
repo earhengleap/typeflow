@@ -8,14 +8,13 @@ import {
     LayoutDashboard, 
     Users, 
     Bell, 
-    Settings, 
     ScrollText, 
     ChevronLeft, 
     ChevronRight, 
-    LogOut,
     Shield,
     ArrowLeft
 } from "lucide-react";
+import { AuthenticSettings } from "@/components/icons/AuthenticSettings";
 import { THEMES } from "@/constants/themes";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 
@@ -24,7 +23,7 @@ const navItems = [
     { name: "Users", href: "/admin/users", icon: Users, superOnly: true },
     { name: "Notifications", href: "/admin/notifications", icon: Bell },
     { name: "Audit Logs", href: "/admin/audit", icon: ScrollText, superOnly: true },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Settings", href: "/admin/settings", icon: AuthenticSettings },
 ];
 
 export function AdminSidebar({ userRole }: { userRole: string }) {

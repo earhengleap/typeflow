@@ -2,7 +2,11 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Type, Crown, Settings, Keyboard as KeyboardIcon, Info, Bell } from "lucide-react";
+import { Type, Bell } from "lucide-react";
+import { AuthenticCrown } from "@/components/icons/AuthenticCrown";
+import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
+import { AuthenticInfo } from "@/components/icons/AuthenticInfo";
+import { AuthenticSettings } from "@/components/icons/AuthenticSettings";
 import { UserMenu } from "@/components/UserMenu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { useState, useEffect } from "react";
@@ -36,11 +40,11 @@ export function Header({ activeTheme }: HeaderProps) {
 
     return (
         <>
-        <header className="relative w-full flex items-center pt-4 pb-2 z-50 px-4 md:px-[180px] mb-4 h-16 md:h-20">
-                <div className="flex w-full items-center justify-between">
+        <header className="relative w-full flex items-center pt-8 pb-4 z-50 px-6 h-16 md:h-20">
+                <div className="flex w-full max-w-[1250px] mx-auto items-center justify-between">
                     {/* Left Group: Logo + Navigation Icons */}
                     <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full">
-                        <Link href="/" className="flex items-center gap-1 sm:gap-2 group cursor-pointer pl-1">
+                        <Link href="/" className="flex items-center gap-1 sm:gap-2 group cursor-pointer pl-1 font-roboto">
                             <Type className="w-6 h-6 md:w-8 md:h-8 transition-transform group-hover:scale-110" style={{ color: activeTheme.primary }} />
                             <h1 className="text-xl sm:text-2xl md:text-[32px] tracking-tight font-bold ml-0 relative" style={{ color: activeTheme.textDim }}>
                                 <span style={{ color: activeTheme.text }}>type</span>flow
@@ -58,7 +62,7 @@ export function Header({ activeTheme }: HeaderProps) {
                                     title="Home"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <KeyboardIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+                                    <AuthenticKeyboard className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
                                 </motion.button>
                             </Link>
 
@@ -71,7 +75,7 @@ export function Header({ activeTheme }: HeaderProps) {
                                     title="Leaderboards"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <Crown className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+                                    <AuthenticCrown className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
                                 </motion.button>
                             </Link>
 
@@ -84,7 +88,7 @@ export function Header({ activeTheme }: HeaderProps) {
                                     title="About"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <Info className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+                                    <AuthenticInfo className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
                                 </motion.button>
                             </Link>
 
@@ -97,7 +101,7 @@ export function Header({ activeTheme }: HeaderProps) {
                                     title="Settings"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <Settings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
+                                    <AuthenticSettings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
                                 </motion.button>
                             </Link>
                         </div>
@@ -113,7 +117,7 @@ export function Header({ activeTheme }: HeaderProps) {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => {
                                 if (status === "unauthenticated") {
-                                    signIn();
+                                    window.location.href = "/login";
                                 } else {
                                     setIsNotificationsOpen(true);
                                 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AuthenticInfo } from "@/components/icons/AuthenticInfo";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import Link from "next/link";
@@ -47,7 +48,7 @@ export default function AboutPage() {
                     {/* ABOUT */}
                     <section className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
-                            <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: activeTheme.primary }} />
+                            <AuthenticInfo className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: activeTheme.primary }} />
                             <h2 className="text-xl sm:text-2xl font-black" style={{ color: activeTheme.textDim }}>about</h2>
                         </div>
                         <p className="text-sm sm:text-base opacity-80">

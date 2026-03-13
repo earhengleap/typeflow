@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { RotateCcw, Timer, Keyboard as KeyboardIcon, Type, Globe, Zap, MousePointer2, Lock, Search, Music, Volume2, VolumeX, Bell, Check, Palette, Star, Terminal, Crown } from "lucide-react";
+import { RotateCcw, Timer, Type, Globe, Zap, MousePointer2, Lock, Search, Music, Volume2, VolumeX, Bell, Check, Palette, Star, Terminal } from "lucide-react";
+import { AuthenticCrown } from "@/components/icons/AuthenticCrown";
+import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
 import { cn } from "@/lib/utils";
 import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
@@ -1909,7 +1911,7 @@ export default function MonkeyTypePage() {
                     >
                         <div className="bg-[#ca4754] text-white p-4 rounded-xl shadow-2xl flex items-center gap-4 border border-white/10">
                             <div className="shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                                <KeyboardIcon className="w-5 h-5" />
+                                <AuthenticKeyboard className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-sm font-bold truncate">Wrong Layout?</h3>
@@ -2467,7 +2469,7 @@ export default function MonkeyTypePage() {
                                         onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.text; e.currentTarget.style.backgroundColor = `${activeTheme.bgAlt}50`; }}
                                         onMouseLeave={(e) => { e.currentTarget.style.color = activeTheme.textDim; e.currentTarget.style.backgroundColor = 'transparent'; }}
                                     >
-                                        <Crown className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+                                        <AuthenticCrown className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
                                         <span className="text-xs font-bold uppercase tracking-widest">
                                             leaderboard
                                         </span>
