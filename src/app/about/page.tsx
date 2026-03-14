@@ -255,7 +255,7 @@ function StatCard({ label, value, theme, loaded, isTime = false }: {
     return (
         <div className="flex flex-col">
             <span className="text-xs font-bold opacity-50 mb-4 uppercase tracking-widest" style={{ color: theme.textDim }}>{label}</span>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 h-[60px]"> {/* Fixed height to prevent layout shift */}
                 {loaded ? (
                     <>
                         <span className="text-6xl font-bold" style={{ color: theme.text }}>
@@ -264,9 +264,10 @@ function StatCard({ label, value, theme, loaded, isTime = false }: {
                         <span className="text-2xl font-bold" style={{ color: theme.text }}>{unit}</span>
                     </>
                 ) : (
-                    <span className="text-2xl font-bold opacity-50 animate-pulse" style={{ color: theme.textDim }}>
-                        downloading...
-                    </span>
+                    <div className="flex items-baseline gap-2 animate-pulse">
+                        <div className="w-32 h-12 rounded-lg bg-current opacity-10" style={{ color: theme.text }} />
+                        <div className="w-16 h-6 rounded-md bg-current opacity-5" style={{ color: theme.text }} />
+                    </div>
                 )}
             </div>
         </div>
