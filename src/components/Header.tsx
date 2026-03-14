@@ -41,8 +41,8 @@ export function Header({ activeTheme }: HeaderProps) {
 
     return (
         <>
-        <header className="relative w-full flex items-center pt-8 pb-4 z-50 px-6 h-16 md:h-20">
-                <div className="flex w-full max-w-[1250px] mx-auto items-center justify-between">
+        <header className="relative w-full flex items-center pt-8 pb-4 z-50 h-16 md:h-20">
+                <div className="flex w-full max-w-[var(--content-max-w)] mx-auto items-center justify-between px-1 sm:px-4">
                     {/* Left Group: Logo + Navigation Icons */}
                     <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full">
                         <Link href="/" className="flex items-center gap-1 sm:gap-2 group cursor-pointer pl-1 font-roboto">
