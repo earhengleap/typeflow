@@ -7,6 +7,7 @@ import { AuthenticCrown } from "@/components/icons/AuthenticCrown";
 import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
 import { AuthenticInfo } from "@/components/icons/AuthenticInfo";
 import { AuthenticSettings } from "@/components/icons/AuthenticSettings";
+import { AuthenticBell } from "@/components/icons/AuthenticBell";
 import { UserMenu } from "@/components/UserMenu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { useState, useEffect } from "react";
@@ -54,55 +55,51 @@ export function Header({ activeTheme }: HeaderProps) {
                         {/* Primary Navigation Icons (Monkeytype Style) */}
                         <div className="flex items-center gap-1 sm:gap-2">
                             <Link href="/">
-                                <motion.button
+                                <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-                                    type="button"
                                     title="Home"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <AuthenticKeyboard className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
-                                </motion.button>
+                                    <AuthenticKeyboard className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors group-hover:text-current hover:brightness-125" />
+                                </motion.div>
                             </Link>
 
                             <Link href="/leaderboards">
-                                <motion.button
+                                <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-                                    type="button"
                                     title="Leaderboards"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <AuthenticCrown className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
-                                </motion.button>
+                                    <AuthenticCrown className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors group-hover:text-current hover:brightness-125" />
+                                </motion.div>
                             </Link>
 
                             <Link href="/about">
-                                <motion.button
+                                <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-                                    type="button"
                                     title="About"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <AuthenticInfo className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
-                                </motion.button>
+                                    <AuthenticInfo className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors group-hover:text-current hover:brightness-125" />
+                                </motion.div>
                             </Link>
 
                             <Link href="/settings">
-                                <motion.button
+                                <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="p-1.5 sm:p-2 rounded-xl transition-all hover:bg-white/5 group cursor-pointer"
-                                    type="button"
                                     title="Settings"
                                     style={{ color: activeTheme.textDim }}
                                 >
-                                    <AuthenticSettings className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
-                                </motion.button>
+                                    <AuthenticSettings className="w-4.5 h-4.5 sm:w-5 sm:h-5 group-hover:rotate-45 transition-transform group-hover:text-current hover:brightness-125" />
+                                </motion.div>
                             </Link>
                         </div>
                     </div>
@@ -127,7 +124,7 @@ export function Header({ activeTheme }: HeaderProps) {
                             title="Notifications"
                             style={{ color: activeTheme.textDim }}
                         >
-                            <Bell className="w-5 h-5 sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+                            <AuthenticBell className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors group-hover:text-current hover:brightness-125" />
                             {hasUnread && (
                                 <span 
                                     className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border border-black/20 animate-pulse" 

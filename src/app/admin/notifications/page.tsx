@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Users, Megaphone, Mail, Bell, Search, Clock, CheckCircle2, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
+import { Send, Users, Megaphone, Bell, Search, Clock, CheckCircle2, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
+import { AuthenticMail } from "@/components/icons/AuthenticMail";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import { Header } from "@/components/Header";
@@ -125,7 +126,7 @@ export default function AdminNotificationsPage() {
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
                                             { id: "announcement", icon: Megaphone, label: "Broadcast" },
-                                            { id: "inbox", icon: Mail, label: "Private DM" },
+                                            { id: "inbox", icon: AuthenticMail, label: "Private DM" },
                                             { id: "notification", icon: Bell, label: "Alert" }
                                         ].map((t) => (
                                             <button
@@ -276,7 +277,7 @@ export default function AdminNotificationsPage() {
                                             >
                                                 <div className="flex items-center justify-between mb-1">
                                                     <div className="flex items-center gap-2">
-                                                        {item.type === "announcement" ? <Megaphone className="w-3 h-3 opacity-40" /> : <Mail className="w-3 h-3 opacity-40" />}
+                                                        {item.type === "announcement" ? <Megaphone className="w-3 h-3 opacity-40" /> : <AuthenticMail className="w-3 h-3 opacity-40" />}
                                                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{item.type}</span>
                                                     </div>
                                                     <span className="text-[9px] opacity-20 font-bold">

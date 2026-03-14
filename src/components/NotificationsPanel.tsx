@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, BellOff, Mail, Megaphone, Trash2, CheckCircle2, Loader2, Sparkles, LogIn } from "lucide-react";
+import { X, BellOff, Megaphone, Trash2, CheckCircle2, Loader2, Sparkles, LogIn } from "lucide-react";
 import { AuthenticInfo } from "@/components/icons/AuthenticInfo";
+import { AuthenticMail } from "@/components/icons/AuthenticMail";
 import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { THEMES } from "@/constants/themes";
@@ -290,7 +291,7 @@ export function NotificationsPanel({ isOpen, onClose, onUpdate, activeTheme }: N
                                 </div>
                             ) : (
                                 <>
-                                    {renderSection("Inbox", data.inbox, "inbox", Mail)}
+                                    {renderSection("Inbox", data.inbox, "inbox", AuthenticMail)}
                                     {renderSection("Announcements", data.announcements, "announcement", Megaphone)}
                                     {renderSection("Notifications", data.notifications, "notification", AuthenticInfo)}
                                 </>

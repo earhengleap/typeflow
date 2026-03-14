@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { THEMES } from "@/constants/themes";
-import { LogIn, LogOut, User, BarChart2 } from "lucide-react";
+import { LogIn, LogOut, BarChart2 } from "lucide-react";
 import { AuthenticSettings } from "@/components/icons/AuthenticSettings";
+import { AuthenticUser } from "@/components/icons/AuthenticUser";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { useEffect, useState, useRef } from "react";
 import { getUserTypingHistory } from "@/app/actions/typing-results";
@@ -66,7 +67,7 @@ export function UserMenu() {
                 style={{ color: activeTheme.textDim }}
                 title="Sign In"
             >
-                <User size={20} className="sm:w-6 sm:h-6 transition-colors group-hover:text-current hover:brightness-125" />
+                <AuthenticUser className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors group-hover:text-current hover:brightness-125" />
             </Link>
         );
     }
@@ -94,8 +95,8 @@ export function UserMenu() {
                         <Image src={session.user.image} alt="Avatar" fill className="object-cover" />
                     </div>
                 ) : (
-                    <div className="p-1.5 rounded-full" style={{ backgroundColor: activeTheme.bgAlt }}>
-                        <User size={18} />
+                    <div className="p-1 rounded-full" style={{ backgroundColor: activeTheme.bgAlt }}>
+                        <AuthenticUser className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                     </div>
                 )}
                 <div className="flex flex-col items-start leading-tight">

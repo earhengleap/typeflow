@@ -8,7 +8,11 @@ import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, MessageSquare, Github, HandHeart } from "lucide-react";
+import { HandHeart } from "lucide-react";
+import { AuthenticMail } from "@/components/icons/AuthenticMail";
+import { AuthenticGithub } from "@/components/icons/AuthenticGithub";
+import { AuthenticDiscord } from "@/components/icons/AuthenticDiscord";
+import { AuthenticSupport } from "@/components/icons/AuthenticSupport";
 import { getGlobalStats, getActivityGraph } from "@/app/actions/global-stats";
 
 export default function AboutPage() {
@@ -66,16 +70,16 @@ export default function AboutPage() {
                             If you encounter a bug, or have a feature request - join the Discord server, send me an email, or create an issue on GitHub.
                         </p>
                         <div className="flex flex-wrap gap-4 mt-1">
-                            <ExternLink href="https://discord.gg/typeflow" icon={MessageSquare} label="Discord" theme={activeTheme} />
-                            <ExternLink href="mailto:support@typeflow.com" icon={Mail} label="Email" theme={activeTheme} />
-                            <ExternLink href="https://github.com/earhengleap/typing/issues" icon={Github} label="GitHub" theme={activeTheme} />
+                            <ExternLink href="https://discord.gg/typeflow" icon={AuthenticDiscord} label="Discord" theme={activeTheme} />
+                            <ExternLink href="mailto:support@typeflow.com" icon={AuthenticMail} label="Email" theme={activeTheme} />
+                            <ExternLink href="https://github.com/earhengleap/typing/issues" icon={AuthenticGithub} label="GitHub" theme={activeTheme} />
                         </div>
                     </section>
 
                     {/* SUPPORT */}
                     <section className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
-                            <HeartIcon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: activeTheme.primary }} />
+                            <AuthenticSupport className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: activeTheme.primary }} />
                             <h2 className="text-xl sm:text-2xl font-black" style={{ color: activeTheme.textDim }}>support</h2>
                         </div>
                         <p className="text-sm sm:text-base opacity-80">

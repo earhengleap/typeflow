@@ -2,13 +2,16 @@
 
 import React from "react";
 import {
-    Mail,
-    Github,
-    Twitter,
-    MessageSquare,
-    Heart,
     Code
 } from "lucide-react";
+import { AuthenticMail } from "@/components/icons/AuthenticMail";
+import { AuthenticGithub } from "@/components/icons/AuthenticGithub";
+import { AuthenticDiscord } from "@/components/icons/AuthenticDiscord";
+import { AuthenticTwitter } from "@/components/icons/AuthenticTwitter";
+import { AuthenticSupport } from "@/components/icons/AuthenticSupport";
+import { AuthenticTerms } from "@/components/icons/AuthenticTerms";
+import { AuthenticSecurity } from "@/components/icons/AuthenticSecurity";
+import { AuthenticPrivacy } from "@/components/icons/AuthenticPrivacy";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import Link from "next/link";
@@ -20,16 +23,16 @@ export function Footer() {
     const activeTheme = THEMES[themeName] || THEMES.codex;
 
     const socialLinks = [
-        { label: "contact", href: "mailto:support@typeflow.com", icon: Mail },
-        { label: "github", href: "https://github.com/earhengleap/typing", icon: Github },
-        { label: "discord", href: "https://discord.gg/typeflow", icon: MessageSquare },
-        { label: "twitter", href: "https://twitter.com/typeflow", icon: Twitter },
+        { label: "contact", href: "mailto:support@typeflow.com", icon: AuthenticMail },
+        { label: "github", href: "https://github.com/earhengleap/typing", icon: AuthenticGithub },
+        { label: "discord", href: "https://discord.gg/typeflow", icon: AuthenticDiscord },
+        { label: "twitter", href: "https://twitter.com/typeflow", icon: AuthenticTwitter },
     ];
 
     const legalLinks = [
-        { label: "terms", href: "/terms" },
-        { label: "security", href: "/security" },
-        { label: "privacy", href: "/privacy" },
+        { label: "terms", href: "/terms", icon: AuthenticTerms },
+        { label: "security", href: "/security", icon: AuthenticSecurity },
+        { label: "privacy", href: "/privacy", icon: AuthenticPrivacy },
     ];
 
     return (
@@ -60,7 +63,7 @@ export function Footer() {
                         className="group flex items-center gap-1.5 transition-all duration-200 opacity-60 hover:opacity-100"
                         style={{ color: activeTheme.textDim }}
                     >
-                        <Heart className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:text-red-500 transition-colors" />
+                        <AuthenticSupport className="w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" />
                         <span className="text-[10px] md:text-xs font-mono font-medium lowercase tracking-tight">
                             support
                         </span>
@@ -74,9 +77,10 @@ export function Footer() {
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="text-[10px] md:text-xs font-mono font-medium lowercase tracking-tight opacity-60 hover:opacity-100 transition-all duration-200"
+                                className="flex items-center gap-1.5 text-[10px] md:text-xs font-mono font-medium lowercase tracking-tight opacity-60 hover:opacity-100 transition-all duration-200"
                                 style={{ color: activeTheme.textDim }}
                             >
+                                <link.icon className="w-3.5 h-3.5" />
                                 {link.label}
                             </Link>
                         ))}

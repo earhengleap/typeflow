@@ -4,7 +4,15 @@ import { signIn } from "next-auth/react";
 import { registerUser } from "@/app/actions/auth";
 import { useMonkeyTypeStore } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
-import { UserPlus, LogIn, Github, Mail, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { UserPlus, LogIn, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { AuthenticMail } from "@/components/icons/AuthenticMail";
+import { AuthenticGithub } from "@/components/icons/AuthenticGithub";
+import { AuthenticDiscord } from "@/components/icons/AuthenticDiscord";
+import { AuthenticTwitter } from "@/components/icons/AuthenticTwitter";
+import { AuthenticSupport } from "@/components/icons/AuthenticSupport";
+import { AuthenticTerms } from "@/components/icons/AuthenticTerms";
+import { AuthenticSecurity } from "@/components/icons/AuthenticSecurity";
+import { AuthenticPrivacy } from "@/components/icons/AuthenticPrivacy";
 import { useState, useEffect } from "react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
@@ -324,7 +332,7 @@ export default function LoginPage() {
                                     className="flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all hover:bg-white/[0.05] group cursor-pointer"
                                     style={buttonStyle}
                                 >
-                                    <Github size={16} className="opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                    <AuthenticGithub size={16} className="opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all" />
                                     <span className="font-bold">GitHub</span>
                                 </motion.button>
                         </motion.div>
@@ -476,15 +484,17 @@ export default function LoginPage() {
             <footer className="w-full flex flex-col items-center gap-6 py-12 px-4 opacity-30 text-[10px] font-bold tracking-tight mt-auto">
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                     {[
-                        { label: "contact", icon: "mail" },
-                        { label: "support", icon: "help-circle" },
-                        { label: "discord", icon: "message-square" },
-                        { label: "twitter", icon: "twitter" },
-                        { label: "terms", icon: "file-text" },
-                        { label: "security", icon: "shield" },
-                        { label: "privacy", icon: "lock" }
+                        { label: "contact", icon: AuthenticMail },
+                        { label: "github", icon: AuthenticGithub },
+                        { label: "discord", icon: AuthenticDiscord },
+                        { label: "twitter", icon: AuthenticTwitter },
+                        { label: "support", icon: AuthenticSupport },
+                        { label: "terms", icon: AuthenticTerms },
+                        { label: "security", icon: AuthenticSecurity },
+                        { label: "privacy", icon: AuthenticPrivacy }
                     ].map(item => (
                         <button key={item.label} className="flex items-center gap-1.5 hover:opacity-100 transition-opacity cursor-pointer">
+                           {typeof item.icon === 'string' ? item.icon : <item.icon className="w-3.5 h-3.5" />}
                            {item.label}
                         </button>
                     ))}
