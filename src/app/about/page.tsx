@@ -87,7 +87,7 @@ export default function AboutPage() {
                         {/* WPM DISTRIBUTION GRAPH */}
                         <div className="flex flex-col gap-4 mt-4">
                             <p className="text-xs opacity-50" style={{ color: activeTheme.textDim }}>
-                                {(wpmData.total / 1000).toFixed(1)} thousand total results
+                                {statsLoaded ? `${(wpmData.total / 1000).toFixed(1)} thousand total results` : "downloading data..."}
                             </p>
                             <div className="h-[250px] w-full flex items-end gap-[2px]">
                                 {statsLoaded ? (
@@ -253,13 +253,21 @@ function StatCard({ label, value, theme, loaded, isTime = false }: {
     }
 
     return (
-        <div className="flex flex-col" style={{ opacity: loaded ? 1 : 0.5 }}>
+        <div className="flex flex-col">
             <span className="text-xs font-bold opacity-50 mb-4 uppercase tracking-widest" style={{ color: theme.textDim }}>{label}</span>
             <div className="flex items-baseline gap-2">
-                <span className="text-6xl font-bold" style={{ color: theme.text }}>
-                    {loaded ? displayValue : "0.00"}
-                </span>
-                <span className="text-2xl font-bold" style={{ color: theme.text }}>{unit}</span>
+                {loaded ? (
+                    <>
+                        <span className="text-6xl font-bold" style={{ color: theme.text }}>
+                            {displayValue}
+                        </span>
+                        <span className="text-2xl font-bold" style={{ color: theme.text }}>{unit}</span>
+                    </>
+                ) : (
+                    <span className="text-2xl font-bold opacity-50 animate-pulse" style={{ color: theme.textDim }}>
+                        downloading...
+                    </span>
+                )}
             </div>
         </div>
     );
