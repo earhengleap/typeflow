@@ -12,6 +12,8 @@ TypeFlow is a professional-grade typing experience built with Next.js, focusing 
 - **📊 Real-time Analytics**: Live WPM, accuracy, and consistency tracking with interactive performance charts.
 - **🏆 Global Leaderboards**: Categorized rankings (Daily, Weekly, All-Time) with unverified score filtering.
 - **🤝 Social Features**: Built-in referral system with unique invite links and achievement tracking.
+- **🎧 Sensory Immersion**: Authentic mechanical typing sounds including the premium "NK Creams" set, with random acoustic variations for 1:1 realism.
+- **⌨️ Focused Mechanics**: Precise caret alignment, persistent spacebar blocking for empty words, and overtyping support to mirror the professional Monkeytype experience.
 
 ## 🛠️ Tech Stack
 
