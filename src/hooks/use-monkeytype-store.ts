@@ -6,6 +6,11 @@ export type GameConfig = 15 | 30 | 60 | 120 | 10 | 25 | 50 | 100 | number;
 export type Language = "english" | "khmer";
 export type Theme = "codex" | "cyberpunk" | "dracula" | "retro" | "nord" | "monokai" | "solarized" | "tokyonight";
 
+export type KeymapMode = "off" | "static" | "react" | "next";
+export type KeymapStyle = "staggered" | "alice" | "matrix" | "split" | "split_matrix" | "steno" | "steno_matrix";
+export type KeymapLegendStyle = "lowercase" | "uppercase" | "blank" | "dynamic";
+export type KeymapShowTopRow = "always" | "layout_dependent" | "never";
+
 export interface TypingStats {
     wpm: number;
     rawWpm: number;
@@ -99,10 +104,24 @@ interface MonkeyTypeState {
     playTimeWarning: boolean | string | number;
     showLiveTimer: boolean;
     showKeyboard: boolean;
+    keymapMode: KeymapMode;
+    keymapStyle: KeymapStyle;
+    keymapLegendStyle: KeymapLegendStyle;
+    keymapSize: number;
+    keymapLayout: string;
+    keymapShowTopRow: KeymapShowTopRow;
+
     setShowLiveWpm: (v: boolean) => void;
     setShowLiveAccuracy: (v: boolean) => void;
     setShowLiveTimer: (v: boolean) => void;
     setShowKeyboard: (v: boolean) => void;
+    setKeymapMode: (v: KeymapMode) => void;
+    setKeymapStyle: (v: KeymapStyle) => void;
+    setKeymapLegendStyle: (v: KeymapLegendStyle) => void;
+    setKeymapSize: (v: number) => void;
+    setKeymapLayout: (v: string) => void;
+    setKeymapShowTopRow: (v: KeymapShowTopRow) => void;
+
     setSoundEnabled: (v: boolean) => void;
     setFontSize: (v: number) => void;
     setFontFamily: (v: string) => void;
@@ -220,11 +239,24 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
             soundVolume: 0.5,
             soundOnError: 'off',
             playTimeWarning: 10,
+            keymapMode: "static",
+            keymapStyle: "staggered",
+            keymapLegendStyle: "lowercase",
+            keymapSize: 1.0,
+            keymapLayout: "qwerty",
+            keymapShowTopRow: "always",
             
             setShowLiveWpm: (v) => set({ showLiveWpm: v }),
             setShowLiveAccuracy: (v) => set({ showLiveAccuracy: v }),
             setShowLiveTimer: (v) => set({ showLiveTimer: v }),
             setShowKeyboard: (v) => set({ showKeyboard: v }),
+            setKeymapMode: (v) => set({ keymapMode: v }),
+            setKeymapStyle: (v) => set({ keymapStyle: v }),
+            setKeymapLegendStyle: (v) => set({ keymapLegendStyle: v }),
+            setKeymapSize: (v) => set({ keymapSize: v }),
+            setKeymapLayout: (v) => set({ keymapLayout: v }),
+            setKeymapShowTopRow: (v) => set({ keymapShowTopRow: v }),
+            
             setSoundEnabled: (v) => set({ soundEnabled: v }),
             setFontSize: (v) => set({ fontSize: v }),
             setFontFamily: (v) => set({ fontFamily: v }),
@@ -279,6 +311,12 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
                 soundVolume: state.soundVolume,
                 soundOnError: state.soundOnError,
                 playTimeWarning: state.playTimeWarning,
+                keymapMode: state.keymapMode,
+                keymapStyle: state.keymapStyle,
+                keymapLegendStyle: state.keymapLegendStyle,
+                keymapSize: state.keymapSize,
+                keymapLayout: state.keymapLayout,
+                keymapShowTopRow: state.keymapShowTopRow,
                 userLevel: state.userLevel,
             }), // Persist settings and history
         }

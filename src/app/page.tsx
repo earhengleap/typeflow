@@ -7,7 +7,7 @@ import { RotateCcw, Timer, Type, Globe, Zap, MousePointer2, Lock, Search, Music,
 import { AuthenticCrown } from "@/components/icons/AuthenticCrown";
 import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
 import { cn } from "@/lib/utils";
-import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint } from "@/hooks/use-monkeytype-store";
+import { useMonkeyTypeStore, GameMode, GameConfig, Language, Theme, ChartPoint, KeymapMode, KeymapStyle, KeymapLegendStyle, KeymapShowTopRow } from "@/hooks/use-monkeytype-store";
 import { THEMES } from "@/constants/themes";
 import { incrementTestsStarted, getGhostRun, saveTypingResult } from "@/app/actions/typing-results";
 import { ACHIEVEMENTS } from "@/constants/achievements";
@@ -76,13 +76,31 @@ const NK_CREAMS_SOUNDS = [
     "https://monkeytype.com/sound/click4/click4_66.wav"
 ];
 
-const KEYBOARD_ROWS = [
-    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
-    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
-    ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'"],
-    ["shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "shift"],
-    ["space"]
-];
+const LAYOUT_MAPS: Record<string, string[][]> = {
+    qwerty: [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
+        ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
+        ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'"],
+        ["shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "shift"],
+        ["space"]
+    ],
+    dvorak: [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "[", "]"],
+        ["'", ",", ".", "p", "y", "f", "g", "c", "r", "l", "/", "=", "\\"],
+        ["a", "o", "e", "u", "i", "d", "h", "t", "n", "s", "-"],
+        ["shift", ";", "q", "j", "k", "x", "b", "m", "w", "v", "z", "shift"],
+        ["space"]
+    ],
+    colemak: [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
+        ["q", "w", "f", "p", "g", "j", "l", "u", "y", ";", "[", "]", "\\"],
+        ["a", "r", "s", "t", "d", "h", "n", "e", "i", "o", "'"],
+        ["shift", "z", "x", "c", "v", "b", "k", "m", ",", ".", "/", "shift"],
+        ["space"]
+    ]
+};
+
+const KEYBOARD_ROWS = LAYOUT_MAPS.qwerty;
 
 const KHMER_KEY_MAP: Record<string, { base: string, shift: string }> = {
     // Row 1
@@ -345,7 +363,7 @@ const Word = React.memo(({
                 );
             })}
             
-            {/* Render extra characters (overtyping) - Fixed: No brackets, clean red border */}
+            {/* Render extra characters (overyping) - Fixed: No brackets, clean red border */}
             {typedWord.length > targetWord.length && (
                 <span className="flex inline-flex">
                     {Array.from(typedWord.substring(targetWord.length)).map((char, i) => (
@@ -375,88 +393,141 @@ const Keyboard = React.memo(({
     errorKey,
     language,
     nextKeyData,
-    activeTheme
+    activeTheme,
+    keymapMode = "static",
+    keymapStyle = "staggered",
+    keymapLegendStyle = "lowercase",
+    keymapSize = 1.0,
+    keymapLayout = "qwerty",
+    keymapShowTopRow = "always"
 }: {
     activeKeys: Set<string>,
     errorKey: string | null,
     language: Language,
     nextKeyData: { key: string | null, needsShift: boolean },
-    activeTheme: typeof THEMES.codex
+    activeTheme: typeof THEMES.codex,
+    keymapMode?: KeymapMode,
+    keymapStyle?: KeymapStyle,
+    keymapLegendStyle?: KeymapLegendStyle,
+    keymapSize?: number,
+    keymapLayout?: string,
+    keymapShowTopRow?: KeymapShowTopRow
 }) => {
+    const layoutRows = LAYOUT_MAPS[keymapLayout as keyof typeof LAYOUT_MAPS] || LAYOUT_MAPS.qwerty;
+    const rowsToRender = keymapShowTopRow === "never" ? layoutRows.slice(1) : layoutRows;
+
     return (
-        <div className="hidden md:flex flex-col gap-2 origin-top mt-4">
-            {KEYBOARD_ROWS.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex justify-center gap-2">
-                    {row.map((qwertyKey, charIndex) => {
-                        const mapping = KHMER_KEY_MAP[qwertyKey];
-                        const isLeftShift = rowIndex === 3 && charIndex === 0;
-                        const isRightShift = rowIndex === 3 && charIndex === row.length - 1;
+        <div 
+            className="hidden md:flex flex-col gap-2 origin-top mt-4 transition-transform duration-200"
+            style={{ 
+                transform: `scale(${keymapSize})`,
+                marginBottom: `${(keymapSize - 1) * 100}px` // Adjust margin to compensate for scale
+            }}
+        >
+            {rowsToRender.map((row, rowIndex) => {
+                const isSplit = keymapStyle === "split" || keymapStyle === "split_matrix";
+                const isMatrix = keymapStyle === "matrix" || keymapStyle === "split_matrix";
+                
+                const leftHalf = isSplit ? row.slice(0, Math.ceil(row.length / 2)) : row;
+                const rightHalf = isSplit ? row.slice(Math.ceil(row.length / 2)) : [];
 
-                        const isReallyPressed = activeKeys.has(qwertyKey);
-                        const isShiftReallyPressed = (isLeftShift && activeKeys.has('shiftleft')) || (isRightShift && activeKeys.has('shiftright'));
-                        const isPressed = isReallyPressed || (qwertyKey === "shift" && isShiftReallyPressed);
+                const renderRowContent = (keys: string[], side?: 'left' | 'right') => (
+                    <div key={side || rowIndex} className={cn(
+                        "flex gap-2",
+                        !isMatrix && rowIndex === 1 && "ml-4",
+                        !isMatrix && rowIndex === 2 && "ml-8",
+                        !isMatrix && rowIndex === 3 && side !== 'right' && "ml-12",
+                        keymapStyle === "staggered" && "justify-center"
+                    )}>
+                        {keys.map((qwertyKey, charIndex) => {
+                            const actualRowIndex = keymapShowTopRow === "never" ? rowIndex + 1 : rowIndex;
+                            const mapping = KHMER_KEY_MAP[qwertyKey];
+                            const isLeftShift = actualRowIndex === 3 && charIndex === 0 && side !== 'right';
+                            const isRightShift = actualRowIndex === 3 && (isSplit ? charIndex === keys.length - 1 : charIndex === row.length - 1) && (side === 'right' || !isSplit);
 
-                        const isErrorPress = errorKey === qwertyKey;
-                        const isShiftKey = qwertyKey === "shift";
+                            const isReallyPressed = activeKeys.has(qwertyKey);
+                            const isShiftReallyPressed = (isLeftShift && activeKeys.has('shiftleft')) || (isRightShift && activeKeys.has('shiftright'));
+                            const isPressed = isReallyPressed || (qwertyKey === "shift" && isShiftReallyPressed);
 
-                        const isNextTarget = nextKeyData.key === qwertyKey;
+                            const isErrorPress = errorKey === qwertyKey;
+                            const isShiftKey = qwertyKey === "shift";
 
-                        // Dynamic Shift Logic: If target key is on Left side, use Right Shift. If on Right side, use Left Shift.
-                        const targetSide = nextKeyData.key && LEFT_SIDE_KEYS.has(nextKeyData.key) ? 'left' : 'right';
-                        const suggestedShift = targetSide === 'left' ? 'right' : 'left';
-                        const isSuggestedShift = (isLeftShift && suggestedShift === 'left') || (isRightShift && suggestedShift === 'right');
+                            const isNextTarget = nextKeyData.key === qwertyKey;
 
-                        // Hint remains until the CORRECT shift is pressed
-                        const needsShiftHint = nextKeyData.needsShift && !isShiftReallyPressed && isSuggestedShift;
+                            const targetSide = nextKeyData.key && LEFT_SIDE_KEYS.has(nextKeyData.key) ? 'left' : 'right';
+                            const suggestedShift = targetSide === 'left' ? 'right' : 'left';
+                            const isSuggestedShift = (isLeftShift && suggestedShift === 'left') || (isRightShift && suggestedShift === 'right');
 
-                        const isNext = (isNextTarget && !isShiftKey) || needsShiftHint;
+                            const needsShiftHint = nextKeyData.needsShift && !isShiftReallyPressed && isSuggestedShift;
+                            const isNext = (isNextTarget && !isShiftKey) || needsShiftHint;
 
-                        return (
-                            <motion.div
-                                key={`${qwertyKey}-${charIndex}`}
-                                animate={{
-                                    scale: isPressed ? 0.92 : 1,
-                                    y: isPressed ? 2 : 0,
-                                }}
-                                transition={{ type: "spring", stiffness: 700, damping: 25, mass: 0.4 }}
-                                className={cn(
-                                    "h-11 px-3 flex items-center justify-center rounded-lg text-sm font-black relative overflow-hidden border-2 transition-all duration-100",
-                                    qwertyKey === "space" ? "w-72 uppercase" : (isShiftKey ? "min-w-[80px]" : "min-w-11"),
-                                    language === "khmer" ? "font-hanuman font-normal" : "uppercase"
-                                )}
-                                style={{
-                                    backgroundColor: isPressed
-                                        ? (isErrorPress ? activeTheme.error : activeTheme.primary)
-                                        : (isNext ? `rgba(${activeTheme.primaryRgb}, 0.12)` : activeTheme.bgAlt),
-                                    borderColor: isPressed
-                                        ? (isErrorPress ? activeTheme.error : activeTheme.primary)
-                                        : (isNext ? activeTheme.primary : 'rgba(255,255,255,0.06)'),
-                                    color: isPressed
-                                        ? activeTheme.bg
-                                        : (isNext ? activeTheme.text : activeTheme.textDim),
-                                    boxShadow: isPressed
-                                        ? `0 0 18px ${isErrorPress ? activeTheme.error : activeTheme.primary}60`
-                                        : (isNext ? `0 0 12px ${activeTheme.primary}40` : '0 3px 0 rgba(0,0,0,0.25)'),
-                                }}
-                            >
-                                {qwertyKey !== "space" ? (
-                                    language === "khmer" && mapping ? (
-                                        <div className="relative w-full h-full flex items-center justify-center">
-                                            <span className={cn("absolute top-1 right-1 text-[9px] font-bold leading-none transition-opacity", isPressed ? "opacity-30" : "opacity-40")}>
-                                                {mapping.shift}
-                                            </span>
-                                            <span className="text-lg leading-none mt-1">
-                                                {mapping.base}
-                                            </span>
-                                        </div>
-                                    ) : qwertyKey
-                                ) : "space"}
-                                {isNext && !isPressed && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: 'var(--mt-primary)' }} />}
-                            </motion.div>
-                        );
-                    })}
-                </div>
-            ))}
+                            const showNextHighlight = keymapMode === "next" && isNext;
+
+                            let displayKey = qwertyKey;
+                            if (keymapLegendStyle === "blank") {
+                                displayKey = "";
+                            } else if (keymapLegendStyle === "uppercase" && qwertyKey !== "space") {
+                                displayKey = qwertyKey.toUpperCase();
+                            } else if (keymapLegendStyle === "lowercase" && qwertyKey !== "space") {
+                                displayKey = qwertyKey.toLowerCase();
+                            } else if (keymapLegendStyle === "dynamic") {
+                                displayKey = qwertyKey.toLowerCase();
+                            }
+
+                            return (
+                                <motion.div
+                                    key={`${qwertyKey}-${charIndex}-${side || 'main'}`}
+                                    animate={{
+                                        scale: isPressed ? 0.92 : 1,
+                                        y: isPressed ? 2 : 0,
+                                    }}
+                                    transition={{ type: "spring", stiffness: 700, damping: 25, mass: 0.4 }}
+                                    className={cn(
+                                        "h-11 px-3 flex items-center justify-center rounded-lg text-sm font-black relative overflow-hidden border-2 transition-all duration-100",
+                                        qwertyKey === "space" ? "w-72" : (isShiftKey ? "min-w-[80px]" : "min-w-11"),
+                                        language === "khmer" ? "font-hanuman font-normal" : ""
+                                    )}
+                                    style={{
+                                        backgroundColor: isPressed
+                                            ? (isErrorPress ? activeTheme.error : activeTheme.primary)
+                                            : (showNextHighlight ? `rgba(${activeTheme.primaryRgb}, 0.12)` : activeTheme.bgAlt),
+                                        borderColor: isPressed
+                                            ? (isErrorPress ? activeTheme.error : activeTheme.primary)
+                                            : (showNextHighlight ? activeTheme.primary : 'rgba(255,255,255,0.06)'),
+                                        color: isPressed
+                                            ? activeTheme.bg
+                                            : (showNextHighlight ? activeTheme.text : activeTheme.textDim),
+                                        boxShadow: isPressed
+                                            ? `0 0 18px ${isErrorPress ? activeTheme.error : activeTheme.primary}60`
+                                            : (showNextHighlight ? `0 0 12px ${activeTheme.primary}40` : '0 3px 0 rgba(0,0,0,0.25)'),
+                                    }}
+                                >
+                                    {qwertyKey !== "space" ? (
+                                        language === "khmer" && mapping ? (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <span className={cn("absolute top-1 right-1 text-[9px] font-bold leading-none transition-opacity", isPressed ? "opacity-30" : "opacity-40")}>
+                                                    {keymapLegendStyle === "blank" ? "" : mapping.shift}
+                                                </span>
+                                                <span className="text-lg leading-none mt-1">
+                                                    {keymapLegendStyle === "blank" ? "" : mapping.base}
+                                                </span>
+                                            </div>
+                                        ) : displayKey
+                                    ) : (keymapLegendStyle === "blank" ? "" : "space")}
+                                    {showNextHighlight && !isPressed && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: 'var(--mt-primary)' }} />}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                );
+
+                return (
+                    <div key={rowIndex} className={cn("flex justify-center", isSplit ? "gap-20" : "gap-0")}>
+                        {renderRowContent(leftHalf, isSplit ? 'left' : undefined)}
+                        {isSplit && renderRowContent(rightHalf, 'right')}
+                    </div>
+                );
+            })}
         </div>
     );
 });
@@ -469,7 +540,9 @@ export default function MonkeyTypePage() {
         setIsActive, setIsFinished, setTimeLeft, setStats, setChartData, resetLiveState, addHistory,
         setMode, setConfig, setLanguage, setTheme, setIsWrongKeyboardLayout, setShowKeyboard, setSettings, toggleFavoriteTheme,
         isSearchOpen, setIsSearchOpen, searchQuery, setSearchQuery, selectedIndex, setSelectedIndex, activeCommandGroup, setActiveCommandGroup,
-        punctuation, numbers, setPunctuation, setNumbers
+        punctuation, numbers, setPunctuation, setNumbers,
+        keymapMode, keymapStyle, keymapLegendStyle, keymapSize, keymapLayout, keymapShowTopRow,
+        setKeymapMode, setKeymapStyle, setKeymapLegendStyle, setKeymapSize, setKeymapLayout, setKeymapShowTopRow
     } = useMonkeyTypeStore();
 
     // -- Advance Sound System --
@@ -1426,6 +1499,14 @@ export default function MonkeyTypePage() {
                 isActive: showKeyboard === false,
                 action: () => { setShowKeyboard(false); setIsSearchOpen(false); } 
             });
+
+            // Keymap Groups
+            list.push({ id: "group-keymap-mode", label: "Keymap Mode...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-mode'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-keymap-style", label: "Keymap Style...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-style'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-keymap-legend", label: "Keymap Legend Style...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-legend'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-keymap-size", label: "Keymap Size...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-size'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-keymap-layout", label: "Keymap Layout...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-layout'); setSelectedIndex(0); setSearchQuery(""); } });
+            list.push({ id: "group-keymap-toprow", label: "Keymap Show Top Row...", category: "Keyboard", icon: <LucideKeyboard className="w-4 h-4 opacity-70" />, action: () => { setActiveCommandGroup('keymap-toprow'); setSelectedIndex(0); setSearchQuery(""); } });
         } else if (activeCommandGroup === 'sound-click') {
             // Click Sounds Sub-menu
             const soundTypes = [
@@ -1536,10 +1617,95 @@ export default function MonkeyTypePage() {
                 return a.label.localeCompare(b.label);
             });
             themeList.forEach(t => list.push(t));
-        }
+        } else if (activeCommandGroup === 'keymap-mode') {
+            const modes: { id: KeymapMode, label: string }[] = [
+                { id: 'off', label: 'Off' },
+                { id: 'static', label: 'Static' },
+                { id: 'react', label: 'React' },
+                { id: 'next', label: 'Next' }
+            ];
+            modes.forEach(m => list.push({
+                id: `keymap-mode-${m.id}`,
+                label: m.label,
+                category: "Keymap Mode",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapMode === m.id,
+                action: () => { setKeymapMode(m.id); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
+        } else if (activeCommandGroup === 'keymap-style') {
+            const styles: { id: KeymapStyle, label: string }[] = [
+                { id: 'staggered', label: 'Staggered' },
+                { id: 'alice', label: 'Alice' },
+                { id: 'matrix', label: 'Matrix' },
+                { id: 'split', label: 'Split' },
+                { id: 'split_matrix', label: 'Split Matrix' },
+                { id: 'steno', label: 'Steno' },
+                { id: 'steno_matrix', label: 'Steno Matrix' }
+            ];
+            styles.forEach(s => list.push({
+                id: `keymap-style-${s.id}`,
+                label: s.label,
+                category: "Keymap Style",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapStyle === s.id,
+                action: () => { setKeymapStyle(s.id); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
+        } else if (activeCommandGroup === 'keymap-legend') {
+            const legends: { id: KeymapLegendStyle, label: string }[] = [
+                { id: 'lowercase', label: 'Lowercase' },
+                { id: 'uppercase', label: 'Uppercase' },
+                { id: 'blank', label: 'Blank' },
+                { id: 'dynamic', label: 'Dynamic' }
+            ];
+            legends.forEach(l => list.push({
+                id: `keymap-legend-${l.id}`,
+                label: l.label,
+                category: "Keymap Legend",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapLegendStyle === l.id,
+                action: () => { setKeymapLegendStyle(l.id); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
+        } else if (activeCommandGroup === 'keymap-size') {
+            const sizes = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+            sizes.forEach(s => list.push({
+                id: `keymap-size-${s}`,
+                label: `${s}x`,
+                category: "Keymap Size",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapSize === s,
+                action: () => { setKeymapSize(s); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
+        } else if (activeCommandGroup === 'keymap-layout') {
+            const layouts = ['qwerty', 'dvorak', 'colemak', 'workman', 'qwertz', 'azerty'];
+            layouts.forEach(l => list.push({
+                id: `keymap-layout-${l}`,
+                label: l,
+                category: "Keymap Layout",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapLayout === l,
+                action: () => { setKeymapLayout(l); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
+        } else if (activeCommandGroup === 'keymap-toprow') {
+            const topRows: { id: KeymapShowTopRow, label: string }[] = [
+                { id: 'always', label: 'Always' },
+                { id: 'layout_dependent', label: 'Layout Dependent' },
+                { id: 'never', label: 'Never' }
+            ];
+            topRows.forEach(tr => list.push({
+                id: `keymap-toprow-${tr.id}`,
+                label: tr.label,
+                category: "Keymap Top Row",
+                icon: <LucideKeyboard className="w-4 h-4 opacity-70" />,
+                isActive: keymapShowTopRow === tr.id,
+                action: () => { setKeymapShowTopRow(tr.id); setIsSearchOpen(false); setActiveCommandGroup(null); }
+            }));
 
+        }
         return list;
-    }, [activeCommandGroup, soundOnError, playTimeWarning, resetTest, setSettings, setTheme, setMode, setConfig, setLanguage, language, favoriteThemes, theme, toggleFavoriteTheme, showKeyboard, setShowKeyboard]);
+    }, [activeCommandGroup, soundOnError, playTimeWarning, resetTest, setSettings, setTheme, setMode, setConfig, setLanguage, language, favoriteThemes, theme, toggleFavoriteTheme, showKeyboard, setShowKeyboard,
+        keymapMode, keymapStyle, keymapLegendStyle, keymapSize, keymapLayout, keymapShowTopRow,
+        setKeymapMode, setKeymapStyle, setKeymapLegendStyle, setKeymapSize, setKeymapLayout, setKeymapShowTopRow
+    ]);
 
     const filteredCommands = useMemo(() => {
         const q = searchQuery.toLowerCase().trim();
@@ -2410,6 +2576,12 @@ export default function MonkeyTypePage() {
                                                 language={language}
                                                 nextKeyData={nextKeyData}
                                                 activeTheme={activeTheme}
+                                                keymapMode={keymapMode}
+                                                keymapStyle={keymapStyle}
+                                                keymapLegendStyle={keymapLegendStyle}
+                                                keymapSize={keymapSize}
+                                                keymapLayout={keymapLayout}
+                                                keymapShowTopRow={keymapShowTopRow}
                                             />
                                         );
                                     })()}
