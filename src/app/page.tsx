@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { RotateCcw, Timer, Type, Globe, Zap, MousePointer2, Lock, Search, Music, Volume2, VolumeX, Bell, Check, Palette, Star, Terminal, Keyboard as LucideKeyboard } from "lucide-react";
+import { FaLock } from "react-icons/fa";
 import { AuthenticCrown } from "@/components/icons/AuthenticCrown";
 import { AuthenticKeyboard } from "@/components/icons/AuthenticKeyboard";
 import { cn } from "@/lib/utils";
@@ -2316,7 +2317,7 @@ export default function MonkeyTypePage() {
                                                 color: activeTheme.bg,
                                             }}
                                         >
-                                            <Lock size={18} fill="currentColor" />
+                                            <FaLock size={16} />
                                             <span>Caps Lock</span>
                                         </motion.div>
                                     )}
