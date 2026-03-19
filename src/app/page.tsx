@@ -449,6 +449,21 @@ const Keyboard = React.memo(({
 });
 Keyboard.displayName = "Keyboard";
 
+const NK_CREAMS_SOUNDS = [
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_1.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_11.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_2.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_22.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_3.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_33.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_4.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_44.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_5.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_55.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_6.wav",
+    "https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/sound/click4/click4_66.wav"
+];
+
 export default function MonkeyTypePage() {
     const mode = useMonkeyTypeStore(state => state.mode);
     const config = useMonkeyTypeStore(state => state.config);
@@ -668,9 +683,13 @@ export default function MonkeyTypePage() {
                     noise.start(); noise.stop(now + 0.08);
                     break;
                 }
-                case 'nk_creams': 
-                    playMechanical(180, 0.12, 0.15); 
+                case 'nk_creams': {
+                    const randomSound = NK_CREAMS_SOUNDS[Math.floor(Math.random() * NK_CREAMS_SOUNDS.length)];
+                    const audio = new Audio(randomSound);
+                    audio.volume = soundVolume;
+                    audio.play().catch(() => {});
                     break;
+                }
                 case 'stone': playMechanical(80, 0.15, 0.4); break;
                 case 'glass': {
                     const osc = audioCtx.createOscillator();
@@ -1245,7 +1264,7 @@ export default function MonkeyTypePage() {
                 const nextTime = useMonkeyTypeStore.getState().timeLeft - 1;
                 setTimeLeft(nextTime);
                 const warningTime = typeof playTimeWarning === 'string' && playTimeWarning !== 'off' ? parseInt(playTimeWarning) : (typeof playTimeWarning === 'number' ? playTimeWarning : (playTimeWarning === true ? 10 : null));
-                if (warningTime !== null && nextTime === warningTime) playWarningSound();
+                // if (warningTime !== null && nextTime === warningTime) playWarningSound();
             }, 1000);
         } else if ((mode === "time" || isCustomTimed) && timeLeft === 0) {
             finishTestRef.current();
@@ -1478,7 +1497,7 @@ export default function MonkeyTypePage() {
             const lastIdx = rawValue.length - 1;
             const target = words[currentWordIndex];
             const isError = lastIdx >= target.length || rawValue[lastIdx] !== target[lastIdx];
-            if (isError) playErrorSound();
+            // if (isError) playErrorSound();
         }
     };
 
